@@ -160,6 +160,7 @@ public class FieldBasedCGUtil {
       scripts.add(new SourceURLModule(p.toUri().toURL()));
     }
     scripts.add(JSCallGraphUtil.getPrologueFile("prologue.js"));
+    scripts.add(JSCallGraphUtil.getPrologueFile("preamble.js"));
     return buildCG(
         loaders, scripts.toArray(new Module[0]), builderType, monitor, supportFullPointerAnalysis);
   }
