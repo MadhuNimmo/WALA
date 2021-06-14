@@ -198,10 +198,15 @@ DOMDocument.prototype.createComment = function Document_prototype_createComment(
 DOMDocument.prototype.getElementsByClassName = function Document_prototype_getElementsByClassName() {
 	// TODO: model me
 };
+DOMDocument.prototype.getElementsByName = function Document_prototype_getElementsByName() {
+	// TODO: model me
+};
 DOMDocument.prototype.querySelectorAll = function Document_prototype_querySelectorAll() {
 	// TODO: model me
 };
-
+DOMDocument.prototype.querySelector = function Document_prototype_querySelector() {
+	// TODO: model me
+};
 
 
 HTMLBody = function HTMLBody(){
@@ -405,11 +410,15 @@ DOMElement = function DOMElement() { // An impostor for the Element class
 DOMElement.prototype.querySelectorAll = function Element_prototype_querySelectorAll() {
 	// TODO: model me
 };
-
+DOMElement.prototype.querySelector = function Element_prototype_querySelector() {
+	// TODO: model me
+};
 DOMElement.prototype.getElementsByClassName = function Element_prototype_getElementsByClassName() {
 	// TODO: model me
 };
-
+DOMElement.prototype.getElementsByName = function Element_prototype_getElementsByName() {
+	// TODO: model me
+};
 DOMElement.prototype.getBoundingClientRect = function Element_prototype_getBoundingClientRect() {
 	// TODO: model me
 };
@@ -645,5 +654,3 @@ function ActiveXObject() {
 	this.loadXML = function AXOloadXML(url) {
 	}
 }
-
-
