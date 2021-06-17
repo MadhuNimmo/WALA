@@ -13,6 +13,9 @@ var local_number = primitive("NewNumber");
 Number = local_number;
 var local_regexp = primitive("NewRegExp");
 RegExp = local_regexp;
+// @MC_ACG
+var local_json = primitive("NewJSON");
+JSON = local_json;
 
 /************************************************************************/
 /* Global properties, see spec 15.1					*/
@@ -100,7 +103,37 @@ Object$proto$__WALA__ =  {
   
   propertyIsEnumerable: function Object_prototype_propertyIsEnumerable (V) {
     return primitive("ObjectPropertyIsEnumerable", this, V);
-  }
+  },
+
+  // @MC_ACG
+  create: function Object_prototype_create() {
+    // TODO: model me
+  },
+
+  defineProperty: function Object_prototype_defineProperty() {
+    // TODO: model me
+  },
+
+  defineProperties: function Object_prototype_defineProperties() {
+    // TODO: model me
+  },
+
+  getPropertyOf: function Object_prototype_getPropertyOf() {
+    //return primitive("ObjectGetPrototypeOf", this, V);
+  },
+
+  getOwnPropertyDescriptor: function Object_prototype_getOwnPropertyDescriptor() {
+    // TODO: model me
+  },
+
+  getOwnPropertyDescriptors: function Object_prototype_getOwnPropertyDescriptors() {
+    // TODO: model me
+  },
+
+  keys: function Object_prototype_keys() {
+    // TODO: model me
+  },
+
 };
 
 Object.prototype = Object$proto$__WALA__;
@@ -108,6 +141,8 @@ Object.prototype = Object$proto$__WALA__;
 /************************************************************************/
 /* Function properties, see spec 15.3					*/
 /************************************************************************/
+//@MC_ACG
+Function = function Function() {};
 
 Function$proto$__WALA__ = {
 
@@ -133,10 +168,11 @@ Function$proto$__WALA__ = {
     return primitive("FunctionBind", this, thisArg, arguments);
   }
 };
+//@MC_ACG
+Function.prototype = Function$proto$__WALA__;
+//local_function.prototype = Function$proto$__WALA__;
 
-local_function.prototype = Function$proto$__WALA__;
-
-local_function.__proto__ = Function.prototype;
+//local_function.__proto__ = Function.prototype;
 
 /************************************************************************/
 /* Array properties, see spec 15.4					*/
@@ -408,6 +444,11 @@ Array$proto$__WALA__ = {
 	    }
 	  }
 	  return result;
+  },
+
+  // @MC_ACG
+  lastIndexOf: function Array_prototype_lastIndexOf() {
+	  // TODO: model me
   }
 
 };
@@ -627,14 +668,15 @@ Math = {
 /* RegExp properties, see spec 15.10					*/
 /************************************************************************/
 
-local_regexp.__proto__ = Function.prototype;
+//local_regexp.__proto__ = Function.prototype;
+RegExp = function RegExp() {};
 
 RegExp$proto$__WALA__ = {
 
   __proto__: Object.prototype,
 
   constructor: RegExp,
-  
+
   exec: function RegExp_prototype_exec(string) {
 	  return [ string, string, string, string, string ] || null;
   },
@@ -644,8 +686,9 @@ RegExp$proto$__WALA__ = {
   }
 
 };
-
-local_regexp.prototype = RegExp$proto$__WALA__;
+//@MC_ACG
+RegExp.prototype = RegExp$proto$__WALA__;
+//local_regexp.prototype = RegExp$proto$__WALA__;
 
 /************************************************************************/
 /* Date properties, see spec 15.9					*/
@@ -744,4 +787,26 @@ function EvalError(str) {
 	this.message = new String();
 }
 
+/************************************************************************/
+/* JSON properties, see 15.12 @MC_ACG
+/************************************************************************/
 
+JSON = function JSON() {};
+
+JSON$proto$__WALA__ = {
+
+  __proto__: Object.prototype,
+
+  constructor: JSON,
+  
+  parse: function JSON_prototype_parse() {
+	  // TODO: model me
+  },
+  
+  stringify: function JSON_prototype_stringify() {
+	  // TODO: model me
+  }
+
+};
+
+JSON.prototype = JSON$proto$__WALA__;
