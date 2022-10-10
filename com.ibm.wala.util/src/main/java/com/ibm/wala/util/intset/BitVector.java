@@ -124,11 +124,12 @@ public class BitVector extends BitVectorBase<BitVector> {
    * @param set the bit set to be ANDed with
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public final void and(BitVector set) {
     if (set == null) {
       throw new IllegalArgumentException("null set");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       return;
     }
     int n = Math.min(bits.length, set.bits.length);
@@ -160,6 +161,7 @@ public class BitVector extends BitVectorBase<BitVector> {
    * @param set the bit set to be ORed with
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public final void or(BitVector set) {
     if (set == null) {
       throw new IllegalArgumentException("null set");
@@ -293,6 +295,7 @@ public class BitVector extends BitVectorBase<BitVector> {
    * @return true if the objects are the same; false otherwise.
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public final boolean sameBits(BitVector B) {
     if (B == null) {
       throw new IllegalArgumentException("null B");
@@ -321,6 +324,7 @@ public class BitVector extends BitVectorBase<BitVector> {
 
   /** @return true iff this is a subset of other */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public boolean isSubset(BitVector other) {
     if (other == null) {
       throw new IllegalArgumentException("null other");

@@ -231,11 +231,12 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @throws IllegalArgumentException if set == null
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public boolean intersectionEmpty(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       return isZero();
     }
 
@@ -261,6 +262,7 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @throws IllegalArgumentException if set == null
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public boolean sameBits(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
@@ -313,6 +315,7 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @param other @return true iff this is a subset of other
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public boolean isSubset(OffsetBitVector other) throws IllegalArgumentException {
     if (other == null) {
       throw new IllegalArgumentException("other == null");
@@ -367,11 +370,12 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @throws IllegalArgumentException if set == null
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public void and(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       return;
     }
 
@@ -400,6 +404,7 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @throws IllegalArgumentException if set == null
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public void or(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
@@ -426,11 +431,12 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
    * @throws IllegalArgumentException if set == null
    */
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public void xor(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       clearAll();
       return;
     }
@@ -447,11 +453,12 @@ public final class OffsetBitVector extends BitVectorBase<OffsetBitVector> {
   }
 
   @Override
+  @SuppressWarnings("ReferenceEquality")
   public void andNot(OffsetBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       clearAll();
       return;
     }

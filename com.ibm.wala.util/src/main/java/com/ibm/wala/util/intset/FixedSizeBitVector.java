@@ -135,11 +135,12 @@ public final class FixedSizeBitVector implements Cloneable, java.io.Serializable
    *
    * @param set the bit set to be ANDed with
    */
+  @SuppressWarnings("ReferenceEquality")
   public void and(FixedSizeBitVector set) {
     if (set == null) {
       throw new IllegalArgumentException("null set");
     }
-    if (this == set) {
+    if (this == set) { // helps JIT compiler with alias analysis
       return;
     }
     int n = bits.length;
@@ -161,6 +162,7 @@ public final class FixedSizeBitVector implements Cloneable, java.io.Serializable
    * @param set the bit set to be ORed with
    * @throws IllegalArgumentException if set == null
    */
+  @SuppressWarnings("ReferenceEquality")
   public void or(FixedSizeBitVector set) throws IllegalArgumentException {
     if (set == null) {
       throw new IllegalArgumentException("set == null");
