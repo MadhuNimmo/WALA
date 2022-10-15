@@ -19,6 +19,7 @@ import com.ibm.wala.cast.js.callgraph.fieldbased.PessimisticCallGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.WorklistBasedOptimisticCallgraphBuilder;
 import com.ibm.wala.cast.js.html.JSSourceExtractor;
 import com.ibm.wala.cast.js.html.WebPageLoaderFactory;
+import com.ibm.wala.cast.js.html.WebUtil;
 import com.ibm.wala.cast.js.ipa.callgraph.JSAnalysisOptions;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCallGraphUtil;
 import com.ibm.wala.cast.js.loader.JavaScriptLoader;
@@ -47,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import com.ibm.wala.cast.js.html.WebUtil;
 
 /**
  * Utility class for building call graphs.

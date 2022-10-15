@@ -53,7 +53,6 @@ import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.HashSetFactory;
-import com.ibm.wala.util.collections.MapUtil;
 import com.ibm.wala.util.collections.Pair;
 import com.ibm.wala.util.intset.OrdinalSet;
 import java.util.Iterator;
@@ -373,9 +372,10 @@ public abstract class FieldBasedCallGraphBuilder {
         result.add(Pair.make(callVertex, funcVertex));
         // add ReflectiveCall vertices for invocations of call and apply
         String fullName = funcVertex.getFullName();
-        if (options instanceof JSAnalysisOptions && ((JSAnalysisOptions) options).handleCallApply()
+        if (options instanceof JSAnalysisOptions
+            && ((JSAnalysisOptions) options).handleCallApply()
             && (fullName.equals("Lprologue.js/Function_prototype_call")
-            || fullName.equals("Lprologue.js/Function_prototype_apply"))) {
+                || fullName.equals("Lprologue.js/Function_prototype_apply"))) {
           JavaScriptInvoke invk = callVertex.getInstruction();
           VarVertex reflectiveCalleeVertex =
               factory.makeVarVertex(callVertex.getCaller(), invk.getUse(1));
@@ -383,7 +383,6 @@ public abstract class FieldBasedCallGraphBuilder {
               reflectiveCalleeVertex,
               factory.makeReflectiveCallVertex(callVertex.getCaller(), invk));
         }
-
       }
     }
 
