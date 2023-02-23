@@ -581,9 +581,15 @@ public class JavaScriptConstructorFunctions {
             }
           }
 
-          assert fcls != null : "cannot find class for " + fileName + " amongst " + fnNames;
+          if (fcls == null) {
+            // This can happen, e.g., if the arguments to the Function constructor call are
+            // malformed.
+            // In this case, return a synthetic constructor similar to the 0-argument case
+            return makeFunctionConstructor(cls, cls);
+          } else {
+            return makeFunctionConstructor(cls, fcls);
+          }
 
-          return makeFunctionConstructor(cls, fcls);
 
         } catch (IOException e) {
 
