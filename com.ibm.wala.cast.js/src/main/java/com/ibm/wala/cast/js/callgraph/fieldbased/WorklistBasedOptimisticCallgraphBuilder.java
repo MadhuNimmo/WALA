@@ -169,8 +169,8 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             // if (wReach.add(fv)) {
             IntIterator mappedFuncs = vReach.intIterator();
             while (mappedFuncs.hasNext()) {
-            FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
-            if (wReach.add(mapping.getMappedIndex(fv))) {
+              FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
+              if (wReach.add(mapping.getMappedIndex(fv))) {
                 changed = true;
                 MapUtil.findOrCreateSet(pendingReflectiveCallWorklist, (VarVertex) w).add(fv);
               }
@@ -229,14 +229,14 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
           // we only add dataflow edges for Function.prototype.call
           boolean isCall = fullName.equals("Lprologue.js/Function_prototype_call");
           reflectiveCalleeVertices.put(reflectiveCalleeVertex, Pair.make(invk, isCall));
-          //for (FuncVertex fw : MapUtil.findOrCreateSet(reachingFunctions, reflectiveCalleeVertex))
-            //addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+          // for (FuncVertex fw : MapUtil.findOrCreateSet(reachingFunctions,
+          // reflectiveCalleeVertex))
+          // addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
           IntIterator reflectiveCalleeMapped =
-                    findOrCreateMutableIntSet(reachingFunctions, reflectiveCalleeVertex)
-                        .intIterator();
+              findOrCreateMutableIntSet(reachingFunctions, reflectiveCalleeVertex).intIterator();
           while (reflectiveCalleeMapped.hasNext()) {
-              FuncVertex fw = mapping.getMappedObject(reflectiveCalleeMapped.next());
-              addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+            FuncVertex fw = mapping.getMappedObject(reflectiveCalleeMapped.next());
+            addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
           }
         }
       }

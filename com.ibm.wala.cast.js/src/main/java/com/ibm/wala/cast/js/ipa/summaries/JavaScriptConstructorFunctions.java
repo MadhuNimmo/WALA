@@ -590,7 +590,6 @@ public class JavaScriptConstructorFunctions {
             return makeFunctionConstructor(cls, fcls);
           }
 
-
         } catch (IOException e) {
 
         }
