@@ -39,6 +39,7 @@ import com.ibm.wala.util.intset.MutableSharedBitVectorIntSet;
 import com.ibm.wala.util.intset.OrdinalSetMapping;
 import java.util.Map;
 import java.util.Set;
+import com.ibm.wala.classLoader.IMethod;
 
 /**
  * Optimistic call graph builder that propagates inter-procedural data flow iteratively as call
@@ -159,9 +160,12 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             IntIterator mappedFuncs = vReach.intIterator();
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
-              if (wReach.add(mapping.getMappedIndex(fv))) {
-                changed = true;
-                MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+              IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
+              if (!(CallVertex w).toSourceLevelString(cache).contains("(Native)") && !fv.toSourceLevelString(cache).contains("(Native)") && im != null &&  im.getNumberOfParameters() == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()){
+                if (wReach.add(mapping.getMappedIndex(fv))) {
+                  changed = true;
+                  MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                }
               }
             }
           } else if (handleCallApply && reflectiveCalleeVertices.containsKey(w)) {
