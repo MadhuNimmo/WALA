@@ -39,6 +39,22 @@ import com.ibm.wala.util.intset.MutableSharedBitVectorIntSet;
 import com.ibm.wala.util.intset.OrdinalSetMapping;
 import java.util.Map;
 import java.util.Set;
+import com.ibm.wala.classLoader.IMethod;
+
+import com.ibm.wala.classLoader.CodeScanner;
+import java.util.Collection;
+import com.ibm.wala.types.FieldReference;
+import com.ibm.wala.ssa.SSAOptions;
+import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.cast.ir.ssa.AstIRFactory;
+import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.IRFactory;
+import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.DefUse;
+import java.util.Iterator;
+import com.ibm.wala.ssa.SymbolTable;
+import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
 
 /**
  * Optimistic call graph builder that propagates inter-procedural data flow iteratively as call
@@ -159,9 +175,95 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             IntIterator mappedFuncs = vReach.intIterator();
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
-              if (wReach.add(mapping.getMappedIndex(fv))) {
-                changed = true;
-                MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+              IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
+              /*if(im != null && ((CallVertex) w).toSourceLevelString(cache).contains("fsig") && fv.toSourceLevelString(cache).contains("fsig") ){
+                IRFactory<IMethod> factoryir = AstIRFactory.makeDefaultFactory();
+                IR ir = factoryir.makeIR(m, Everywhere.EVERYWHERE,
+                        new SSAOptions());
+                DefUse du = new DefUse(ir);
+                SSAInstruction[] statements = ir.getInstructions();
+                int instNum = statements[0].getDef();
+                Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
+                int count = 0;
+                while (instNumUse.hasNext()) {
+                  instNumUse.next();
+                  count++;
+                }
+                System.out.println("Size of iterator: " + count);
+              }*/
+              if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js") || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js") || fv.toSourceLevelString(cache).contains("preamble.js") || fv.toSourceLevelString(cache).contains("prologue.js") || (im != null &&  im.getNumberOfParameters() == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters())){
+                if (wReach.add(mapping.getMappedIndex(fv))) {
+                  changed = true;
+                  MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                }
+              }else if(im != null &&  ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() > im.getNumberOfParameters()){
+                IRFactory<IMethod> factoryir = AstIRFactory.makeDefaultFactory();
+                IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE,
+                        new SSAOptions());
+                DefUse du = new DefUse(ir);
+                SSAInstruction[] statements = ir.getInstructions();
+                int instNum = statements[0].getDef();
+                boolean argumentsArrUse = false;
+                try{
+                  Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
+                  if (instNumUse.hasNext()) {
+                    argumentsArrUse = true;
+                  }
+                }catch(ArrayIndexOutOfBoundsException exception){
+                  argumentsArrUse = true;
+                }
+                if (argumentsArrUse){
+                  if (wReach.add(mapping.getMappedIndex(fv))) {
+                    changed = true;
+                    MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                  }
+                }
+              }else if(im != null && ( ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() < im.getNumberOfParameters() || ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() > im.getNumberOfParameters())){
+                IRFactory<IMethod> factoryir = AstIRFactory.makeDefaultFactory();
+                IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE,
+                        new SSAOptions());
+                DefUse du = new DefUse(ir);
+                SSAInstruction[] statements = ir.getInstructions();
+
+                int instNum = statements[0].getDef();
+                boolean argumentsArrUse = false;
+                try{
+                  Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
+                  if (instNumUse.hasNext()) {
+                    argumentsArrUse = true;
+                  }
+                }catch(ArrayIndexOutOfBoundsException exception){
+                  argumentsArrUse = true;
+                }
+                if (argumentsArrUse){
+                  if (wReach.add(mapping.getMappedIndex(fv))) {
+                    changed = true;
+                    MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                  }
+                }/*else{
+                  //SymbolTable symtab = ir.getSymbolTable();
+                  int[] parameters = ir.getParameterValueNumbers();
+                  int cntOfUse = 0;
+                  for (int param : parameters) {
+                    try{
+                      Iterator<SSAInstruction> instNumUse = du.getUses(param);
+                      if (instNumUse.hasNext()) {
+                        cntOfUse+=1;
+                      }
+                    }catch(ArrayIndexOutOfBoundsException exception){
+                      System.out.println("ArrayIndexOutOfBoundsException");
+                    }
+                  }
+                  //System.out.println(cntOfUse+" "+parameters.length);
+                  if(cntOfUse==(parameters.length-2)){
+                    //System.out.println(((CallVertex) w).toSourceLevelString(cache));
+                    //System.out.println(fv.toSourceLevelString(cache));
+                    if (wReach.add(mapping.getMappedIndex(fv))) {
+                      changed = true;
+                      MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                    }
+                  }
+                }*/
               }
             }
           } else if (handleCallApply && reflectiveCalleeVertices.containsKey(w)) {
