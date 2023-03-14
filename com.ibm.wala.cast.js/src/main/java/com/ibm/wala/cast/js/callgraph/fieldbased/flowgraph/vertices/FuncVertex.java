@@ -51,6 +51,22 @@ public class FuncVertex extends Vertex implements ObjectVertex {
     return visitor.visitFuncVertex(this);
   }
 
+  public String getEnclosingFileName(){
+    String[] parts = klass.getName().toString().split("/");
+    String jsFile = "Native";
+    for (int i = parts.length - 1; i >= 0; i--) {
+        if (parts[i].endsWith(".js")) {
+            jsFile = parts[i];
+            break;
+        }
+    }
+    if (jsFile.contains("Lpreamble.js") || jsFile.contains("Lprologue.js")){
+      //System.out.println("here "+jsFile);
+      jsFile="";
+    }
+    return jsFile;
+  }
+
   @Override
   public String toString() {
     String methodName = klass.getName().toString();

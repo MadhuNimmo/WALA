@@ -226,6 +226,9 @@ public class FlowGraphBuilder {
     }
 
     private void visitPut(int val, String propName) {
+      if(func.getEnclosingFileName() != ""){
+          propName = func.getEnclosingFileName()+"@"+propName;
+      }
       Vertex v = factory.makeVarVertex(func, val), w = factory.makePropVertex(propName);
       flowgraph.addEdge(v, w);
     }
@@ -256,7 +259,9 @@ public class FlowGraphBuilder {
       int p = pw.getMemberRef();
       if (symtab.isConstant(p)) {
         String pn = JSCallGraphUtil.simulateToStringForPropertyNames(symtab.getConstantValue(p));
-
+        if(func.getEnclosingFileName() != ""){
+          pn = func.getEnclosingFileName()+"@"+pn;
+        }
         Vertex v = factory.makeVarVertex(func, pw.getValue()), w = factory.makePropVertex(pn);
         flowgraph.addEdge(v, w);
       }
@@ -275,7 +280,9 @@ public class FlowGraphBuilder {
     public void visitGet(SSAGetInstruction get) {
       String propName = get.getDeclaredField().getName().toString();
       if (propName.startsWith("global ")) propName = propName.substring("global ".length());
-
+      if(func.getEnclosingFileName() != ""){
+        propName = func.getEnclosingFileName()+"@"+propName;
+      }
       Vertex v = factory.makePropVertex(propName), w = factory.makeVarVertex(func, get.getDef());
       flowgraph.addEdge(v, w);
       handleLexicalDef(get.getDef());
@@ -299,6 +306,9 @@ public class FlowGraphBuilder {
       int p = pr.getMemberRef();
       if (symtab.isConstant(p)) {
         String pn = JSCallGraphUtil.simulateToStringForPropertyNames(symtab.getConstantValue(p));
+        if(func.getEnclosingFileName() != ""){
+          pn = func.getEnclosingFileName()+"@"+pn;
+        }
         Vertex v = factory.makePropVertex(pn), w = factory.makeVarVertex(func, pr.getDef());
         flowgraph.addEdge(v, w);
       }
@@ -409,6 +419,9 @@ public class FlowGraphBuilder {
                 JSCallGraphUtil.simulateToStringForPropertyNames(
                     symtab.getConstantValue(invk.getFunction()));
             // flow callee property into callee vertex
+            if(func.getEnclosingFileName() != ""){
+              pn = func.getEnclosingFileName()+"@"+pn;
+            }
             flowgraph.addEdge(factory.makePropVertex(pn), factory.makeCallVertex(func, invk));
           }
         } else {
