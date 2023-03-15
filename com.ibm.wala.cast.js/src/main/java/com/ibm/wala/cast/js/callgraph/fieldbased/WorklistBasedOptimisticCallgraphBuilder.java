@@ -10,6 +10,8 @@
  */
 package com.ibm.wala.cast.js.callgraph.fieldbased;
 
+import com.ibm.wala.cast.ir.ssa.AstIRFactory;
+import com.ibm.wala.cast.ir.ssa.CAstBinaryOp;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraph;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.CallVertex;
@@ -21,9 +23,20 @@ import com.ibm.wala.cast.js.ipa.callgraph.JSAnalysisOptions;
 import com.ibm.wala.cast.js.ssa.JavaScriptInvoke;
 import com.ibm.wala.cast.js.types.JavaScriptMethods;
 import com.ibm.wala.cast.types.AstMethodReference;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.IAnalysisCacheView;
+import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
+import com.ibm.wala.shrike.shrikeBT.IUnaryOpInstruction;
+import com.ibm.wala.ssa.DefUse;
+import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.IRFactory;
+import com.ibm.wala.ssa.SSABinaryOpInstruction;
+import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
+import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAOptions;
+import com.ibm.wala.ssa.SSAUnaryOpInstruction;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
@@ -37,32 +50,10 @@ import com.ibm.wala.util.intset.MutableIntSet;
 import com.ibm.wala.util.intset.MutableMapping;
 import com.ibm.wala.util.intset.MutableSharedBitVectorIntSet;
 import com.ibm.wala.util.intset.OrdinalSetMapping;
+import java.util.*;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import com.ibm.wala.classLoader.IMethod;
-
-import com.ibm.wala.classLoader.CodeScanner;
-import java.util.Collection;
-import com.ibm.wala.types.FieldReference;
-import com.ibm.wala.ssa.SSAOptions;
-import com.ibm.wala.ipa.callgraph.impl.Everywhere;
-import com.ibm.wala.cast.ir.ssa.AstIRFactory;
-import com.ibm.wala.ssa.IR;
-import com.ibm.wala.ssa.IRFactory;
-import com.ibm.wala.ssa.SSAInstruction;
-import com.ibm.wala.ssa.DefUse;
-import java.util.Iterator;
-import com.ibm.wala.ssa.SymbolTable;
-import com.ibm.wala.types.TypeReference;
-import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
-import com.ibm.wala.ssa.SSAUnaryOpInstruction;
-import com.ibm.wala.ssa.SSABinaryOpInstruction;
-import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.ssa.SSAInvokeDynamicInstruction;
-import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
-import com.ibm.wala.shrike.shrikeBT.IUnaryOpInstruction;
-import com.ibm.wala.cast.ir.ssa.CAstBinaryOp;
-import java.util.*;
 
 /**
  * Optimistic call graph builder that propagates inter-procedural data flow iteratively as call
@@ -88,7 +79,10 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
 
   private Map<IMethod, Boolean> funcsUsingArgumentsArray = new HashMap<>();
   private Map<IMethod, Boolean> funcsUsingLessParsThanDefined = new HashMap<>();
-  List<CAstBinaryOp> binaryOpList = new ArrayList<>(Arrays.asList(CAstBinaryOp.EQ,CAstBinaryOp.NE,CAstBinaryOp.STRICT_EQ,CAstBinaryOp.STRICT_NE));
+  List<CAstBinaryOp> binaryOpList =
+      new ArrayList<>(
+          Arrays.asList(
+              CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
 
   public WorklistBasedOptimisticCallgraphBuilder(
       IClassHierarchy cha,
@@ -190,43 +184,51 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
-              /*if (((CallVertex) w).isNew() && im!=null && ((CallVertex) w).toSourceLevelString(cache).contains("fsig")){
-                System.out.println(((CallVertex) w).toSourceLevelString(cache)+" : "+fv.toSourceLevelString(cache));
-                System.out.println(((CallVertex) w).getInstruction().getNumberOfPositionalParameters() +" : "+ im.getNumberOfParameters() );
-              }*/
-              //if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js") || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js") || fv.toSourceLevelString(cache).contains("preamble.js") || fv.toSourceLevelString(cache).contains("prologue.js") || (((CallVertex) w).isNew() && im!=null &&  ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 1 == im.getNumberOfParameters() ) ||(im != null &&  im.getNumberOfParameters() == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters())){
-              if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js") || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js") || fv.toSourceLevelString(cache).contains("preamble.js") || fv.toSourceLevelString(cache).contains("prologue.js") || ((CallVertex) w).isNew() ||(im != null &&  im.getNumberOfParameters() == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters())){
+              if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
+                  || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
+                  || fv.toSourceLevelString(cache).contains("preamble.js")
+                  || fv.toSourceLevelString(cache).contains("prologue.js")
+                  || ((CallVertex) w).isNew()
+                  || (im != null
+                      && im.getNumberOfParameters()
+                          == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters())) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                 }
-              }else if(im != null && ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() < im.getNumberOfParameters() ){
-                if(useOfArgumentsArray(im)){
+              } else if (im != null
+                  && ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
+                      < im.getNumberOfParameters()) {
+                if (useOfArgumentsArray(im)) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
-                }else{
+                } else {
                   boolean allUsed = true;
-                  if(funcsUsingLessParsThanDefined.containsKey(im)){
+                  if (funcsUsingLessParsThanDefined.containsKey(im)) {
                     allUsed = funcsUsingLessParsThanDefined.get(im);
-                  }else{
-                    IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE,
-                            new SSAOptions());
+                  } else {
+                    IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
 
                     Map<Integer, Boolean> extraParsList = new HashMap<>();
 
-                    for(int i = ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()+1; i <= im.getNumberOfParameters(); i++){
-                      extraParsList.put(i,false);
+                    for (int i =
+                            ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 1;
+                        i <= im.getNumberOfParameters();
+                        i++) {
+                      extraParsList.put(i, false);
                     }
 
-                    for(SSAInstruction statement : ir.getInstructions()){
-                      if (statement instanceof SSAConditionalBranchInstruction || 
-                      (statement instanceof SSAUnaryOpInstruction &&  ((SSAUnaryOpInstruction) statement).getOpcode() == IUnaryOpInstruction.Operator.NEG) ||
-                      //(statement instanceof SSABinaryOpInstruction &&  (((SSABinaryOpInstruction) statement).getOperator() == CAstBinaryOp.EQ || ((SSABinaryOpInstruction) statement).getOperator() == CAstBinaryOp.NE || ((SSABinaryOpInstruction) statement).getOperator() == CAstBinaryOp.STRICT_EQ || ((SSABinaryOpInstruction) statement).getOperator() == CAstBinaryOp.STRICT_NE)) ){
-                      //(statement instanceof SSAAbstractInvokeInstruction || statement instanceof SSAInvokeDynamicInstruction || statement instanceof SSAInvokeInstruction) ){
-                      (statement instanceof SSABinaryOpInstruction &&  binaryOpList.contains(((SSABinaryOpInstruction) statement).getOperator()))){
-                        for (int j =0; j< statement.getNumberOfUses();j++ ){
+                    for (SSAInstruction statement : ir.getInstructions()) {
+                      if (statement instanceof SSAConditionalBranchInstruction
+                          || (statement instanceof SSAUnaryOpInstruction
+                              && ((SSAUnaryOpInstruction) statement).getOpcode()
+                                  == IUnaryOpInstruction.Operator.NEG)
+                          || (statement instanceof SSABinaryOpInstruction
+                              && binaryOpList.contains(
+                                  ((SSABinaryOpInstruction) statement).getOperator()))) {
+                        for (int j = 0; j < statement.getNumberOfUses(); j++) {
                           if (extraParsList.containsKey(statement.getUse(j))) {
                             extraParsList.put(statement.getUse(j), true);
                           }
@@ -241,16 +243,18 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       }
                     }
                   }
-                  if(allUsed){
-                    funcsUsingLessParsThanDefined.put(im,true);
+                  if (allUsed) {
+                    funcsUsingLessParsThanDefined.put(im, true);
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       changed = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   }
                 }
-              }else if(im != null &&  ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() > im.getNumberOfParameters() ){
-                if(useOfArgumentsArray(im)){
+              } else if (im != null
+                  && ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
+                      > im.getNumberOfParameters()) {
+                if (useOfArgumentsArray(im)) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -422,25 +426,24 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
         worklist);
   }
 
-  private boolean useOfArgumentsArray(IMethod im){
-    if(funcsUsingArgumentsArray.containsKey(im)){
+  private boolean useOfArgumentsArray(IMethod im) {
+    if (funcsUsingArgumentsArray.containsKey(im)) {
       return funcsUsingArgumentsArray.get(im);
-    }else{
-      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE,
-              new SSAOptions());
+    } else {
+      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
       DefUse du = new DefUse(ir);
       SSAInstruction[] statements = ir.getInstructions();
       int instNum = statements[0].getDef();
       boolean argumentsArrUse = false;
-      try{
+      try {
         Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
         if (instNumUse.hasNext()) {
           argumentsArrUse = true;
         }
-      }catch(ArrayIndexOutOfBoundsException exception){
+      } catch (ArrayIndexOutOfBoundsException exception) {
         argumentsArrUse = true;
       }
-      funcsUsingArgumentsArray.put(im,argumentsArrUse);
+      funcsUsingArgumentsArray.put(im, argumentsArrUse);
       return argumentsArrUse;
     }
   }
