@@ -32,6 +32,7 @@ import com.ibm.wala.shrike.shrikeBT.IUnaryOpInstruction;
 import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.IRFactory;
+import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
 import com.ibm.wala.ssa.SSABinaryOpInstruction;
 import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
@@ -184,10 +185,11 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
-              if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
-                  || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
-                  || fv.toSourceLevelString(cache).contains("preamble.js")
-                  || fv.toSourceLevelString(cache).contains("prologue.js")
+              /*if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
+              || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
+              || fv.toSourceLevelString(cache).contains("preamble.js")
+              || fv.toSourceLevelString(cache).contains("prologue.js")*/
+              if (im == null
                   || ((CallVertex) w).isNew()
                   || (im != null
                       && im.getNumberOfParameters()
@@ -227,7 +229,8 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                                   == IUnaryOpInstruction.Operator.NEG)
                           || (statement instanceof SSABinaryOpInstruction
                               && binaryOpList.contains(
-                                  ((SSABinaryOpInstruction) statement).getOperator()))) {
+                                  ((SSABinaryOpInstruction) statement).getOperator()))
+                          || statement instanceof SSAAbstractInvokeInstruction) {
                         for (int j = 0; j < statement.getNumberOfUses(); j++) {
                           if (extraParsList.containsKey(statement.getUse(j))) {
                             extraParsList.put(statement.getUse(j), true);
