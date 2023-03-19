@@ -189,78 +189,81 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
               || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
               || fv.toSourceLevelString(cache).contains("preamble.js")
               || fv.toSourceLevelString(cache).contains("prologue.js")*/
-              if (im == null
-                  || ((CallVertex) w).isNew()
-                  || (im != null
-                      && im.getNumberOfParameters()
-                          == ((CallVertex) w).getInstruction().getNumberOfPositionalParameters())) {
+              if (im == null || ((CallVertex) w).isNew()) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                 }
-              } else if (im != null
-                  && ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
-                      < im.getNumberOfParameters()) {
-                if (useOfArgumentsArray(im)) {
+              } else if (im != null) {
+                int noOfPassedParameters =
+                    ((CallVertex) w).getInstruction().getNumberOfPositionalParameters();
+                int noOfDefinedParameters = im.getNumberOfParameters();
+                if (noOfPassedParameters == noOfDefinedParameters) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
-                } else {
-                  boolean allUsed = true;
-                  if (funcsUsingLessParsThanDefined.containsKey(im)) {
-                    allUsed = funcsUsingLessParsThanDefined.get(im);
-                  } else {
-                    IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
-
-                    Map<Integer, Boolean> extraParsList = new HashMap<>();
-
-                    for (int i =
-                            ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 1;
-                        i <= im.getNumberOfParameters();
-                        i++) {
-                      extraParsList.put(i, false);
-                    }
-
-                    for (SSAInstruction statement : ir.getInstructions()) {
-                      if (statement instanceof SSAConditionalBranchInstruction
-                          || (statement instanceof SSAUnaryOpInstruction
-                              && ((SSAUnaryOpInstruction) statement).getOpcode()
-                                  == IUnaryOpInstruction.Operator.NEG)
-                          || (statement instanceof SSABinaryOpInstruction
-                              && binaryOpList.contains(
-                                  ((SSABinaryOpInstruction) statement).getOperator()))
-                          || statement instanceof SSAAbstractInvokeInstruction) {
-                        for (int j = 0; j < statement.getNumberOfUses(); j++) {
-                          if (extraParsList.containsKey(statement.getUse(j))) {
-                            extraParsList.put(statement.getUse(j), true);
-                          }
-                        }
-                      }
-                    }
-
-                    for (Boolean value : extraParsList.values()) {
-                      if (!value) {
-                        allUsed = false;
-                        break;
-                      }
-                    }
-                  }
-                  if (allUsed) {
-                    funcsUsingLessParsThanDefined.put(im, true);
+                } else if (noOfPassedParameters < noOfDefinedParameters) {
+                  if (useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       changed = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
+                  } else {
+                    boolean allUsed = true;
+                    if (funcsUsingLessParsThanDefined.containsKey(im)) {
+                      allUsed = funcsUsingLessParsThanDefined.get(im);
+                    } else {
+                      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
+
+                      Map<Integer, Boolean> extraParsList = new HashMap<>();
+
+                      for (int i =
+                              ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
+                                  + 1;
+                          i <= im.getNumberOfParameters();
+                          i++) {
+                        extraParsList.put(i, false);
+                      }
+
+                      for (SSAInstruction statement : ir.getInstructions()) {
+                        if (statement instanceof SSAConditionalBranchInstruction
+                            || (statement instanceof SSAUnaryOpInstruction
+                                && ((SSAUnaryOpInstruction) statement).getOpcode()
+                                    == IUnaryOpInstruction.Operator.NEG)
+                            || (statement instanceof SSABinaryOpInstruction
+                                && binaryOpList.contains(
+                                    ((SSABinaryOpInstruction) statement).getOperator()))
+                            || statement instanceof SSAAbstractInvokeInstruction) {
+                          for (int j = 0; j < statement.getNumberOfUses(); j++) {
+                            if (extraParsList.containsKey(statement.getUse(j))) {
+                              extraParsList.put(statement.getUse(j), true);
+                            }
+                          }
+                        }
+                      }
+
+                      for (Boolean value : extraParsList.values()) {
+                        if (!value) {
+                          allUsed = false;
+                          break;
+                        }
+                      }
+                    }
+                    if (allUsed) {
+                      funcsUsingLessParsThanDefined.put(im, true);
+                      if (wReach.add(mapping.getMappedIndex(fv))) {
+                        changed = true;
+                        MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                      }
+                    }
                   }
-                }
-              } else if (im != null
-                  && ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
-                      > im.getNumberOfParameters()) {
-                if (useOfArgumentsArray(im)) {
-                  if (wReach.add(mapping.getMappedIndex(fv))) {
-                    changed = true;
-                    MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                } else if (noOfPassedParameters > noOfDefinedParameters) {
+                  if (useOfArgumentsArray(im)) {
+                    if (wReach.add(mapping.getMappedIndex(fv))) {
+                      changed = true;
+                      MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                    }
                   }
                 }
               }
