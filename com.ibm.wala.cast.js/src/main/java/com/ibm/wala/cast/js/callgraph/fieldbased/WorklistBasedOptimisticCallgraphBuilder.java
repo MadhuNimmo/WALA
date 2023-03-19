@@ -189,7 +189,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
               || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
               || fv.toSourceLevelString(cache).contains("preamble.js")
               || fv.toSourceLevelString(cache).contains("prologue.js")*/
-              if (im == null || ((CallVertex) w).isNew()) {
+              if (im == null) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -198,12 +198,17 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                 int noOfPassedParameters =
                     ((CallVertex) w).getInstruction().getNumberOfPositionalParameters();
                 int noOfDefinedParameters = im.getNumberOfParameters();
-                if (noOfPassedParameters == noOfDefinedParameters) {
+                if ((((CallVertex) w).isNew() && noOfPassedParameters + 1 == noOfDefinedParameters)
+                    || (!((CallVertex) w).isNew()
+                        && noOfPassedParameters == noOfDefinedParameters)) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
-                } else if (noOfPassedParameters < noOfDefinedParameters) {
+                } else if ((((CallVertex) w).isNew()
+                        && noOfPassedParameters + 1 < noOfDefinedParameters)
+                    || (!((CallVertex) w).isNew()
+                        && noOfPassedParameters < noOfDefinedParameters)) {
                   if (useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       changed = true;
@@ -217,12 +222,13 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
 
                       Map<Integer, Boolean> extraParsList = new HashMap<>();
-
-                      for (int i =
-                              ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
-                                  + 1;
-                          i <= im.getNumberOfParameters();
-                          i++) {
+                      int i = 0;
+                      if (((CallVertex) w).isNew()) {
+                        i = ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 2;
+                      } else {
+                        i = ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 1;
+                      }
+                      for (; i <= im.getNumberOfParameters(); i++) {
                         extraParsList.put(i, false);
                       }
 
@@ -258,7 +264,10 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       }
                     }
                   }
-                } else if (noOfPassedParameters > noOfDefinedParameters) {
+                } else if ((((CallVertex) w).isNew()
+                        && noOfPassedParameters + 1 > noOfDefinedParameters)
+                    || (!((CallVertex) w).isNew()
+                        && noOfPassedParameters > noOfDefinedParameters)) {
                   if (useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       changed = true;
