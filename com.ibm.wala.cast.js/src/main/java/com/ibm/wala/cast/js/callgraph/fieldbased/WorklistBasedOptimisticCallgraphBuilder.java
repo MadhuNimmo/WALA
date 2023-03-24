@@ -185,10 +185,44 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
-              /*if (((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
-              || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
-              || fv.toSourceLevelString(cache).contains("preamble.js")
-              || fv.toSourceLevelString(cache).contains("prologue.js")*/
+              if ((((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
+                      || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js"))
+                  && !(fv.getFullName().equals("Lprologue.js/Function_prototype_call")
+                      || fv.getFullName().equals("Lprologue.js/Function_prototype_apply"))) {
+                continue;
+              }
+              /*if (instruction instanceof JavaScriptInvoke) {
+                JavaScriptInvoke invoke = (JavaScriptInvoke) instruction;
+                if (invoke.getFunctionName().equals("method")) {
+                  int objectVarIndex = invoke.getUse(0);
+                  System.out.println(objectVarIndex);
+                }
+              }*/
+              /*if (((CallVertex) w).getInstruction().toString().contains("dispatch") && ((CallVertex) w).toSourceLevelString(cache).contains("fsig")) {
+                IR ir2 = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
+                int objectVarIndex = ((CallVertex) w).getInstruction().getUse(1);
+                System.out.println(((CallVertex) w).toSourceLevelString(cache)+": Object reference variable index: " + objectVarIndex);
+                if(im!=null){
+                  SSAInstruction[] insts = ir2.getInstructions();
+                  for (int i = 0; i < insts.length; i++) {
+                    if (insts[i] != null && insts[i].toString() ==((CallVertex) w).getInstruction().toString()) {
+                      System.out.println(((CallVertex) w).toSourceLevelString(cache)+": Object reference variable : " + ir2.getLocalNames(i, objectVarIndex));
+                    }
+                  }
+                }
+              }*/
+              if (((CallVertex) w).isNew()
+                  && ((CallVertex) w).toSourceLevelString(cache).contains("fsig")
+                  && im != null) {
+                System.out.println(
+                    ((CallVertex) w).toSourceLevelString(cache)
+                        + " "
+                        + fv.toSourceLevelString(cache));
+                System.out.println(
+                    ((CallVertex) w).getInstruction().getNumberOfPositionalParameters()
+                        + " "
+                        + im.getNumberOfParameters());
+              }
               if (im == null) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
@@ -198,15 +232,13 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                 int noOfPassedParameters =
                     ((CallVertex) w).getInstruction().getNumberOfPositionalParameters();
                 int noOfDefinedParameters = im.getNumberOfParameters();
-                if ((((CallVertex) w).isNew() && noOfPassedParameters + 1 == noOfDefinedParameters)
-                    || (!((CallVertex) w).isNew()
-                        && noOfPassedParameters == noOfDefinedParameters)) {
+                if (!((CallVertex) w).isNew() && noOfPassedParameters == noOfDefinedParameters) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
                 } else if ((((CallVertex) w).isNew()
-                        && noOfPassedParameters + 1 < noOfDefinedParameters)
+                        && noOfPassedParameters < noOfDefinedParameters)
                     || (!((CallVertex) w).isNew()
                         && noOfPassedParameters < noOfDefinedParameters)) {
                   if (useOfArgumentsArray(im)) {
@@ -215,49 +247,8 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   } else {
-                    boolean allUsed = true;
-                    if (funcsUsingLessParsThanDefined.containsKey(im)) {
-                      allUsed = funcsUsingLessParsThanDefined.get(im);
-                    } else {
-                      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
-
-                      Map<Integer, Boolean> extraParsList = new HashMap<>();
-                      int i = 0;
-                      if (((CallVertex) w).isNew()) {
-                        i = ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 2;
-                      } else {
-                        i = ((CallVertex) w).getInstruction().getNumberOfPositionalParameters() + 1;
-                      }
-                      for (; i <= im.getNumberOfParameters(); i++) {
-                        extraParsList.put(i, false);
-                      }
-
-                      for (SSAInstruction statement : ir.getInstructions()) {
-                        if (statement instanceof SSAConditionalBranchInstruction
-                            || (statement instanceof SSAUnaryOpInstruction
-                                && ((SSAUnaryOpInstruction) statement).getOpcode()
-                                    == IUnaryOpInstruction.Operator.NEG)
-                            || (statement instanceof SSABinaryOpInstruction
-                                && binaryOpList.contains(
-                                    ((SSABinaryOpInstruction) statement).getOperator()))
-                            || statement instanceof SSAAbstractInvokeInstruction) {
-                          for (int j = 0; j < statement.getNumberOfUses(); j++) {
-                            if (extraParsList.containsKey(statement.getUse(j))) {
-                              extraParsList.put(statement.getUse(j), true);
-                            }
-                          }
-                        }
-                      }
-
-                      for (Boolean value : extraParsList.values()) {
-                        if (!value) {
-                          allUsed = false;
-                          break;
-                        }
-                      }
-                    }
-                    if (allUsed) {
-                      funcsUsingLessParsThanDefined.put(im, true);
+                    if (usingLessParsThanDefined(
+                        ((CallVertex) w).getInstruction(), im, false, ((CallVertex) w).isNew())) {
                       if (wReach.add(mapping.getMappedIndex(fv))) {
                         changed = true;
                         MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -265,10 +256,11 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                     }
                   }
                 } else if ((((CallVertex) w).isNew()
-                        && noOfPassedParameters + 1 > noOfDefinedParameters)
+                        && noOfPassedParameters >= noOfDefinedParameters)
                     || (!((CallVertex) w).isNew()
                         && noOfPassedParameters > noOfDefinedParameters)) {
-                  if (useOfArgumentsArray(im)) {
+                  if (noOfPassedParameters + 1 == noOfDefinedParameters
+                      || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       changed = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -336,9 +328,12 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
           JavaScriptInvoke invk = callVertex.getInstruction();
           VarVertex reflectiveCalleeVertex =
               factory.makeVarVertex(callVertex.getCaller(), invk.getUse(1));
+          // IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
+          // if(invk.getNumberOfPositionalParameters() == im.getNumberOfParameters()){
           flowgraph.addEdge(
               reflectiveCalleeVertex,
               factory.makeReflectiveCallVertex(callVertex.getCaller(), invk));
+          // }
           // we only add dataflow edges for Function.prototype.call
           boolean isCall = fullName.equals("Lprologue.js/Function_prototype_call");
           reflectiveCalleeVertices.put(reflectiveCalleeVertex, Pair.make(invk, isCall));
@@ -349,7 +344,18 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
               findOrCreateMutableIntSet(reachingFunctions, reflectiveCalleeVertex).intIterator();
           while (reflectiveCalleeMapped.hasNext()) {
             FuncVertex fw = mapping.getMappedObject(reflectiveCalleeMapped.next());
-            addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+            IMethod im2 = fw.getConcreteType().getMethod(AstMethodReference.fnSelector);
+            if (invk.getNumberOfPositionalParameters() + 1 == im2.getNumberOfParameters()) {
+              addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+            } else if (invk.getNumberOfPositionalParameters() + 1 < im2.getNumberOfParameters()
+                && useOfArgumentsArray(im2)) {
+              addReflectiveCallEdge(flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+            } else if (invk.getNumberOfPositionalParameters() + 1 > im2.getNumberOfParameters()) {
+              if (useOfArgumentsArray(im2)) {
+                addReflectiveCallEdge(
+                    flowgraph, reflectiveCalleeVertex, invk, fw, worklist, isCall);
+              }
+            }
           }
         }
       }
@@ -365,8 +371,23 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       final Vertex v = entry.getKey();
       Pair<JavaScriptInvoke, Boolean> invkAndIsCall = reflectiveCalleeVertices.get(v);
       for (FuncVertex fv : entry.getValue()) {
-        addReflectiveCallEdge(
-            flowgraph, (VarVertex) v, invkAndIsCall.fst, fv, worklist, invkAndIsCall.snd);
+        IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
+        if (invkAndIsCall.fst.getNumberOfPositionalParameters() + 1 == im.getNumberOfParameters()) {
+          addReflectiveCallEdge(
+              flowgraph, (VarVertex) v, invkAndIsCall.fst, fv, worklist, invkAndIsCall.snd);
+        } else if (invkAndIsCall.fst.getNumberOfPositionalParameters() + 1
+                < im.getNumberOfParameters()
+            && useOfArgumentsArray(im)) {
+          addReflectiveCallEdge(
+              flowgraph, (VarVertex) v, invkAndIsCall.fst, fv, worklist, invkAndIsCall.snd);
+        } else if (invkAndIsCall.fst.getNumberOfPositionalParameters() + 1
+            > im.getNumberOfParameters()) {
+          if (useOfArgumentsArray(im)
+              || usingLessParsThanDefined(invkAndIsCall.fst, im, invkAndIsCall.snd, false)) {
+            addReflectiveCallEdge(
+                flowgraph, (VarVertex) v, invkAndIsCall.fst, fv, worklist, invkAndIsCall.snd);
+          }
+        }
       }
     }
   }
@@ -421,7 +442,8 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       boolean isFunctionPrototypeCall) {
     VertexFactory factory = flowgraph.getVertexFactory();
     FuncVertex caller = reflectiveCallee.getFunction();
-
+    // IMethod im = realCallee.getConcreteType().getMethod(AstMethodReference.fnSelector);
+    // if(invk.getNumberOfPositionalParameters() == im.getNumberOfParameters()){
     if (isFunctionPrototypeCall) {
       // flow from arguments to parameters
       for (int i = 2; i < invk.getNumberOfPositionalParameters(); ++i) {
@@ -440,6 +462,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
         factory.makeVarVertex(caller, invk.getDef()),
         worklist);
   }
+  // }
 
   private boolean useOfArgumentsArray(IMethod im) {
     if (funcsUsingArgumentsArray.containsKey(im)) {
@@ -461,5 +484,57 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       funcsUsingArgumentsArray.put(im, argumentsArrUse);
       return argumentsArrUse;
     }
+  }
+
+  private boolean usingLessParsThanDefined(
+      JavaScriptInvoke invk, IMethod im, boolean isCallorApply, boolean isNew) {
+    boolean allUsed = true;
+    if (funcsUsingLessParsThanDefined.containsKey(im)) {
+      allUsed = funcsUsingLessParsThanDefined.get(im);
+    } else {
+      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
+
+      Map<Integer, Boolean> extraParsList = new HashMap<>();
+      int i = 0;
+      if (isNew) {
+        i = invk.getNumberOfPositionalParameters() + 2;
+      } else if (isCallorApply) {
+        i = invk.getNumberOfPositionalParameters() - 1;
+      } else {
+        i = invk.getNumberOfPositionalParameters() + 1;
+      }
+      for (; i <= im.getNumberOfParameters(); i++) {
+        extraParsList.put(i, false);
+      }
+      System.out.println(extraParsList);
+      for (SSAInstruction statement : ir.getInstructions()) {
+        if (statement instanceof SSAConditionalBranchInstruction
+            || (statement instanceof SSAUnaryOpInstruction
+                && ((SSAUnaryOpInstruction) statement).getOpcode()
+                    == IUnaryOpInstruction.Operator.NEG)
+            || (statement instanceof SSABinaryOpInstruction
+                && binaryOpList.contains(((SSABinaryOpInstruction) statement).getOperator()))
+            || statement instanceof SSAAbstractInvokeInstruction) {
+          for (int j = 0; j < statement.getNumberOfUses(); j++) {
+            if (extraParsList.containsKey(statement.getUse(j))) {
+              extraParsList.put(statement.getUse(j), true);
+            }
+          }
+        }
+      }
+      System.out.println(extraParsList);
+      for (Boolean value : extraParsList.values()) {
+        if (!value) {
+          allUsed = false;
+          break;
+        }
+      }
+    }
+    if (allUsed) {
+      funcsUsingLessParsThanDefined.put(im, true);
+    } else {
+      funcsUsingLessParsThanDefined.put(im, false);
+    }
+    return funcsUsingLessParsThanDefined.get(im);
   }
 }

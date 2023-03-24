@@ -11,6 +11,8 @@
 package com.ibm.wala.cast.js.callgraph.fieldbased;
 
 import com.ibm.wala.cast.ipa.callgraph.AstContextInsensitiveSSAContextInterpreter;
+import com.ibm.wala.cast.ir.ssa.AstIRFactory;
+import com.ibm.wala.cast.ir.ssa.CAstBinaryOp;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraph;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.CallVertex;
@@ -48,13 +50,23 @@ import com.ibm.wala.ipa.callgraph.propagation.cfa.DefaultSSAInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.DelegatingSSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.nCFAContextSelector;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
+import com.ibm.wala.shrike.shrikeBT.IUnaryOpInstruction;
+import com.ibm.wala.ssa.DefUse;
+import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
+import com.ibm.wala.ssa.SSABinaryOpInstruction;
+import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
+import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAOptions;
+import com.ibm.wala.ssa.SSAUnaryOpInstruction;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.collections.Pair;
 import com.ibm.wala.util.intset.OrdinalSet;
+import java.util.*;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -77,6 +89,14 @@ public abstract class FieldBasedCallGraphBuilder {
   protected final boolean supportFullPointerAnalysis;
 
   private static final boolean LOG_TIMINGS = true;
+
+  private IRFactory<IMethod> factoryir = AstIRFactory.makeDefaultFactory();
+  private Map<IMethod, Boolean> funcsUsingArgumentsArray = new HashMap<>();
+  private Map<IMethod, Boolean> funcsUsingLessParsThanDefined = new HashMap<>();
+  List<CAstBinaryOp> binaryOpList =
+      new ArrayList<>(
+          Arrays.asList(
+              CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
 
   public FieldBasedCallGraphBuilder(
       IClassHierarchy cha,
@@ -298,9 +318,26 @@ public abstract class FieldBasedCallGraphBuilder {
       IMethod reflectiveTgtMethod =
           targetSelector.getCalleeTarget(
               functionPrototypeCallNode, reflectiveCallSite, f.getConcreteType());
-      ret |=
-          addEdgeToJSCallGraph(
-              cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+      if (callVertex.getInstruction().getNumberOfPositionalParameters()
+          <= reflectiveTgtMethod.getNumberOfParameters()) {
+        if (useOfArgumentsArray(reflectiveTgtMethod)
+            || usingLessParsThanDefined(
+                callVertex.getInstruction(), reflectiveTgtMethod, true, false)) {
+          ret |=
+              addEdgeToJSCallGraph(
+                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+        }
+      } else if (callVertex.getInstruction().getNumberOfPositionalParameters()
+          > reflectiveTgtMethod.getNumberOfParameters()) {
+
+        if (callVertex.getInstruction().getNumberOfPositionalParameters()
+                == reflectiveTgtMethod.getNumberOfParameters() + 1
+            || useOfArgumentsArray(reflectiveTgtMethod)) {
+          ret |=
+              addEdgeToJSCallGraph(
+                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+        }
+      }
     }
     return ret;
   }
@@ -387,5 +424,79 @@ public abstract class FieldBasedCallGraphBuilder {
     }
 
     return result;
+  }
+
+  private boolean useOfArgumentsArray(IMethod im) {
+    if (funcsUsingArgumentsArray.containsKey(im)) {
+      return funcsUsingArgumentsArray.get(im);
+    } else {
+      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
+      DefUse du = new DefUse(ir);
+      SSAInstruction[] statements = ir.getInstructions();
+      int instNum = statements[0].getDef();
+      boolean argumentsArrUse = false;
+      try {
+        Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
+        if (instNumUse.hasNext()) {
+          argumentsArrUse = true;
+        }
+      } catch (ArrayIndexOutOfBoundsException exception) {
+        argumentsArrUse = true;
+      }
+      funcsUsingArgumentsArray.put(im, argumentsArrUse);
+      return argumentsArrUse;
+    }
+  }
+
+  private boolean usingLessParsThanDefined(
+      JavaScriptInvoke invk, IMethod im, boolean isCallorApply, boolean isNew) {
+    boolean allUsed = true;
+    if (funcsUsingLessParsThanDefined.containsKey(im)) {
+      allUsed = funcsUsingLessParsThanDefined.get(im);
+    } else {
+      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
+
+      Map<Integer, Boolean> extraParsList = new HashMap<>();
+      int i = 0;
+      if (isNew) {
+        i = invk.getNumberOfPositionalParameters() + 2;
+      } else if (isCallorApply) {
+        i = invk.getNumberOfPositionalParameters();
+      } else {
+        i = invk.getNumberOfPositionalParameters() + 1;
+      }
+      System.out.println(i);
+      for (; i <= im.getNumberOfParameters(); i++) {
+        extraParsList.put(i, false);
+      }
+
+      for (SSAInstruction statement : ir.getInstructions()) {
+        if (statement instanceof SSAConditionalBranchInstruction
+            || (statement instanceof SSAUnaryOpInstruction
+                && ((SSAUnaryOpInstruction) statement).getOpcode()
+                    == IUnaryOpInstruction.Operator.NEG)
+            || (statement instanceof SSABinaryOpInstruction
+                && binaryOpList.contains(((SSABinaryOpInstruction) statement).getOperator()))
+            || statement instanceof SSAAbstractInvokeInstruction) {
+          for (int j = 0; j < statement.getNumberOfUses(); j++) {
+            if (extraParsList.containsKey(statement.getUse(j))) {
+              extraParsList.put(statement.getUse(j), true);
+            }
+          }
+        }
+      }
+      for (Boolean value : extraParsList.values()) {
+        if (!value) {
+          allUsed = false;
+          break;
+        }
+      }
+    }
+    if (allUsed) {
+      funcsUsingLessParsThanDefined.put(im, true);
+    } else {
+      funcsUsingLessParsThanDefined.put(im, false);
+    }
+    return funcsUsingLessParsThanDefined.get(im);
   }
 }
