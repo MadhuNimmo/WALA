@@ -112,12 +112,12 @@ Object$proto$__WALA__ =  {
     return primitive("ObjectPropertyIsEnumerable", this, V);
   },
 
-  create: function Object_prototype_create() {
+  create: function Object_prototype_create(proto) {
     // TODO: model me
   },
 
-  defineProperty: function Object_prototype_defineProperty() {
-    // TODO: model me
+  defineProperty: function Object_prototype_defineProperty(obj,prop,descriptor) {
+    return primitive("ObjectDefineProperty", obj, prop, descriptor);
   },
 
   defineProperties: function Object_prototype_defineProperties() {
@@ -145,11 +145,11 @@ Object$proto$__WALA__ =  {
     // TODO: model me
   },
 
-  freeze: function Object_prototype_freeze() {
+  freeze: function Object_prototype_freeze(obj) {
     // TODO: model me
   },
 
-  isExtensible: function Object_prototype_isExtensible() {
+  isExtensible: function Object_prototype_isExtensible(obj) {
     // TODO: model me
   }
 
@@ -836,11 +836,11 @@ JSON$proto$__WALA__ = {
 
   constructor: JSON,
 
-  parse: function JSON_prototype_parse() {
+  parse: function JSON_prototype_parse(value) {
 	  // TODO: model me
   },
   
-  stringify: function JSON_prototype_stringify() {
+  stringify: function JSON_prototype_stringify(value) {
 	  // TODO: model me
   }
 
@@ -859,7 +859,7 @@ Map$proto$__WALA__ = {
 
   constructor: Map,
 
-  has: function Map_prototype_has () {
+  has: function Map_prototype_has (key) {
     // TO DO
   }
 }

@@ -315,28 +315,35 @@ public abstract class FieldBasedCallGraphBuilder {
     CallSiteReference reflectiveCallSite =
         functionPrototypeCallNode.getIR().iterateCallSites().next();
     for (FuncVertex f : reflectiveTargets) {
+
       IMethod reflectiveTgtMethod =
           targetSelector.getCalleeTarget(
               functionPrototypeCallNode, reflectiveCallSite, f.getConcreteType());
-      if (callVertex.getInstruction().getNumberOfPositionalParameters()
-          <= reflectiveTgtMethod.getNumberOfParameters()) {
-        if (useOfArgumentsArray(reflectiveTgtMethod)
-            || usingLessParsThanDefined(
-                callVertex.getInstruction(), reflectiveTgtMethod, true, false)) {
-          ret |=
-              addEdgeToJSCallGraph(
-                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
-        }
-      } else if (callVertex.getInstruction().getNumberOfPositionalParameters()
-          > reflectiveTgtMethod.getNumberOfParameters()) {
 
+      if(!callVertex.toSourceLevelString(cache).contains("prologue.js") && functionPrototypeCallNode.getMethod().getSignature().contains("prologue.js.Function_prototype_call") && reflectiveTgtMethod!=null){
         if (callVertex.getInstruction().getNumberOfPositionalParameters()
-                == reflectiveTgtMethod.getNumberOfParameters() + 1
-            || useOfArgumentsArray(reflectiveTgtMethod)) {
-          ret |=
-              addEdgeToJSCallGraph(
-                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+            <= reflectiveTgtMethod.getNumberOfParameters()) {
+          if (useOfArgumentsArray(reflectiveTgtMethod)
+              || usingLessParsThanDefined(
+                  callVertex.getInstruction(), reflectiveTgtMethod, true, false)) {
+            ret |=
+                addEdgeToJSCallGraph(
+                    cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+          }
+        } else if (callVertex.getInstruction().getNumberOfPositionalParameters()
+            > reflectiveTgtMethod.getNumberOfParameters()) {
+
+          if (callVertex.getInstruction().getNumberOfPositionalParameters()
+                  == reflectiveTgtMethod.getNumberOfParameters() + 1
+              || useOfArgumentsArray(reflectiveTgtMethod)) {
+            ret |=
+                addEdgeToJSCallGraph(
+                    cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+          }
         }
+      }else{
+          addEdgeToJSCallGraph(
+                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
       }
     }
     return ret;
@@ -465,7 +472,7 @@ public abstract class FieldBasedCallGraphBuilder {
       } else {
         i = invk.getNumberOfPositionalParameters() + 1;
       }
-      System.out.println(i);
+
       for (; i <= im.getNumberOfParameters(); i++) {
         extraParsList.put(i, false);
       }
