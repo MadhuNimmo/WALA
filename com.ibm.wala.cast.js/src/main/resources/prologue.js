@@ -141,7 +141,7 @@ Object$proto$__WALA__ =  {
     // TODO: model me
   },
 
-  keys: function Object_prototype_keys() {
+  keys: function Object_prototype_keys(obj) {
     // TODO: model me
   },
 
@@ -467,7 +467,7 @@ Array$proto$__WALA__ = {
 	  return result;
   },
 
-  lastIndexOf: function Array_prototype_lastIndexOf() {
+  lastIndexOf: function Array_prototype_lastIndexOf(searchString, position) {
 	  // TODO: model me
   }
 

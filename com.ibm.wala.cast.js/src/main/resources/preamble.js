@@ -202,7 +202,7 @@ DOMDocument = function DOMDocument() {
 DOMDocument.prototype.createDocumentFragment = function Document_prototype_createDocumentFragment() {
 	return new DOMDocument();
 };
-DOMDocument.prototype.createComment = function Document_prototype_createComment() {
+DOMDocument.prototype.createComment = function Document_prototype_createComment(data) {
 	// TODO: model me
 };
 DOMDocument.prototype.getElementsByClassName = function Document_prototype_getElementsByClassName() {

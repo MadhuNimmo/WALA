@@ -66,7 +66,6 @@ import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.reflect.TypeToken;
 
-
 /**
  * Optimistic call graph builder that propagates inter-procedural data flow iteratively as call
  * edges are discovered. Slower, but potentially more sound than {@link
@@ -152,7 +151,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     }
     int cnt = 0;
     int flowCnt = 0;
-    int flowBound = 20;
+    int flowBound = 20000;
     /**
      * if bound is missing, calledges are added until all worklists are empty else, the calledges
      * are added until the bound value is hit *
@@ -213,8 +212,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       || fv.getFullName().equals("Lprologue.js/Function_prototype_apply"))) {
                 continue;
               }
-
-              if (im == null) {
+              if (im == null ) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -272,7 +270,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
               }
             }
           } else {
-
             changed = wReach.addAll(vReach);
           }
           //if (changed) worklist.add(w);
@@ -516,24 +513,10 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                     == IUnaryOpInstruction.Operator.NEG)
             || (statement instanceof SSABinaryOpInstruction
                 && binaryOpList.contains(((SSABinaryOpInstruction) statement).getOperator()))
-            || statement instanceof SSAAbstractInvokeInstruction) {
+                || statement instanceof SSAAbstractInvokeInstruction) {
           for (int j = 0; j < statement.getNumberOfUses(); j++) {
             if (extraParsList.containsKey(statement.getUse(j))) {
               extraParsList.put(statement.getUse(j), true);
-            }
-          }
-        }
-      }
-
-      for (SSAInstruction inst : Iterator2Iterable.make(ir.iteratePhis())){
-        //if (inst instanceof SSAPhiInstruction){
-        SSAPhiInstruction phi = (SSAPhiInstruction) inst;
-        if (phi == null) {
-          continue;
-        }else{
-          for (int j = 0; j < inst.getNumberOfUses(); j++) {
-            if (extraParsList.containsKey(inst.getUse(j))) {
-              extraParsList.put(inst.getUse(j), true);
             }
           }
         }

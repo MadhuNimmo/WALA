@@ -319,7 +319,7 @@ public abstract class FieldBasedCallGraphBuilder {
       IMethod reflectiveTgtMethod =
           targetSelector.getCalleeTarget(
               functionPrototypeCallNode, reflectiveCallSite, f.getConcreteType());
-
+      // allow function signature filtering for all calls via call but prevent filtering for such calls within prologue.js as such calls are designed in a different way
       if(!callVertex.toSourceLevelString(cache).contains("prologue.js") && functionPrototypeCallNode.getMethod().getSignature().contains("prologue.js.Function_prototype_call") && reflectiveTgtMethod!=null){
         if (callVertex.getInstruction().getNumberOfPositionalParameters()
             <= reflectiveTgtMethod.getNumberOfParameters()) {
