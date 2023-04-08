@@ -120,7 +120,7 @@ Object$proto$__WALA__ =  {
     return primitive("ObjectDefineProperty", obj, prop, descriptor);
   },
 
-  defineProperties: function Object_prototype_defineProperties() {
+  defineProperties: function Object_prototype_defineProperties(obj, props) {
     // TODO: model me
   },
 
@@ -328,7 +328,7 @@ Array$proto$__WALA__ = {
     for(var l = 0; i < this.length; l++) {
       var mindex = l;
       for(var i = l; i < this.length; i++) {
-        if (fn(this[mindex], this[i]) < 0) {
+        if (fn.call(undefined,this[mindex], this[i]) < 0) {
           mindex = i;
         }
       }

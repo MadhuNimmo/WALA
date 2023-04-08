@@ -149,11 +149,11 @@ DOMNode.prototype.cloneNode = function Node_prototype_cloneNode(deep) {
 	// TODO: model me
 };
 
-DOMNode.prototype.compareDocumentPosition = function Node_prototype_compareDocumentPosition() {
+DOMNode.prototype.compareDocumentPosition = function Node_prototype_compareDocumentPosition(otherNode) {
 	// TODO: model me
 };
 
-DOMNode.prototype.contains = function Node_prototype_contains() {
+DOMNode.prototype.contains = function Node_prototype_contains(otherNode) {
 	return true || false;
 }
 
@@ -205,10 +205,10 @@ DOMDocument.prototype.createDocumentFragment = function Document_prototype_creat
 DOMDocument.prototype.createComment = function Document_prototype_createComment(data) {
 	// TODO: model me
 };
-DOMDocument.prototype.getElementsByClassName = function Document_prototype_getElementsByClassName() {
+DOMDocument.prototype.getElementsByClassName = function Document_prototype_getElementsByClassName(name) {
 	// TODO: model me
 };
-DOMDocument.prototype.getElementsByName = function Document_prototype_getElementsByName() {
+DOMDocument.prototype.getElementsByName = function Document_prototype_getElementsByName(name) {
 	// TODO: model me
 };
 DOMDocument.prototype.querySelectorAll = function Document_prototype_querySelectorAll(selectors) {
@@ -273,7 +273,7 @@ Image = function Image() {
 
 DOMWindow = function DOMWindow(){
 	this.name = new String();
-	this.open = function window_open(url, stuff) { 
+	this.open = function window_open(url, target, windowFeatures) { 
 		note_url(url); 
 	};
 	this.addEventListener = function Window_prototype_addEventListener(name, fn , options) {
@@ -425,7 +425,7 @@ DOMElement = function DOMElement() { // An impostor for the Element class
 
     this.focus = function Element_prototype_focus() {};
 
-    this.hasAttribute = function Element_prototype_hasAttribute() {};	
+    this.hasAttribute = function Element_prototype_hasAttribute(name) {};	
     this.scrollTo = function Element_prototype_scrollTo() {};	
 };
 

@@ -37,7 +37,6 @@ import com.ibm.wala.ssa.SSABinaryOpInstruction;
 import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
 import com.ibm.wala.cast.js.ipa.callgraph.JSSSAPropagationCallGraphBuilder;
 import com.ibm.wala.ssa.SSAInstruction;
-import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAOptions;
 import com.ibm.wala.ssa.SSAUnaryOpInstruction;
 import com.ibm.wala.util.CancelException;
@@ -65,6 +64,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.reflect.TypeToken;
+import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.PropVertex;
 
 /**
  * Optimistic call graph builder that propagates inter-procedural data flow iteratively as call
@@ -151,7 +151,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     }
     int cnt = 0;
     int flowCnt = 0;
-    int flowBound = 20000;
+    int flowBound = 6;
     /**
      * if bound is missing, calledges are added until all worklists are empty else, the calledges
      * are added until the bound value is hit *
@@ -274,7 +274,12 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
           }
           //if (changed) worklist.add(w);
           if (changed) {
-            pendingFlowWorklist.add(w);
+            if(w instanceof PropVertex){
+              pendingFlowWorklist.add(w);
+            }else{
+              worklist.add(w);
+            }
+
           }
         }
       }
