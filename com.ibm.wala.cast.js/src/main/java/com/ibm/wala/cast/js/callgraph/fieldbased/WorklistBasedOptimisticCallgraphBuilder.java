@@ -202,8 +202,23 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       || fv.getFullName().equals("Lprologue.js/Function_prototype_apply"))) {
                 continue;
               }
-
-              if (im == null) {
+              //allow all contructors calls except from prologue/preamble
+              if (im == null || ( !(((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
+                                || ((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
+                    ) && (fv.toSourceLevelString(cache).contains("prologue.js@83:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@165:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@200:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@486:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@611:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@708:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@734:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@831:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@852:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@870:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@888:")
+                      || fv.toSourceLevelString(cache).contains("prologue.js@911:"))
+                      )
+              ) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -358,7 +373,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       Pair<JavaScriptInvoke, Boolean> invkAndIsCall = reflectiveCalleeVertices.get(v);
       for (FuncVertex fv : entry.getValue()) {
         IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
-        if(invkAndIsCall.snd){
+        if(invkAndIsCall.snd && im!=null){
           if (invkAndIsCall.fst.getNumberOfPositionalParameters() >= im.getNumberOfParameters()){
              if (invkAndIsCall.fst.getNumberOfPositionalParameters()
                      == im.getNumberOfParameters() + 1 || useOfArgumentsArray(im)) {
