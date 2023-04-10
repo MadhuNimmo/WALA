@@ -217,7 +217,7 @@ DOMDocument.prototype.querySelectorAll = function Document_prototype_querySelect
 DOMDocument.prototype.querySelector = function Document_prototype_querySelector(selectors) {
 	// TODO: model me
 };
-DOMDocument.prototype.hasFeature = function Document_prototype_hasFeature() {
+DOMDocument.prototype.hasFeature = function Document_prototype_hasFeature(feature, version) {
 	// TODO: model me
 };
 
@@ -370,7 +370,7 @@ window.decodeURIComponent = decodeURIComponent;
 
 window.navigate = function navigate(a) {}
 
-Window.requestAnimationFrame = function window_requestAnimationFrame(){}
+Window.requestAnimationFrame = function window_requestAnimationFrame(callback){}
 
 window.document = document;
 document.defaultView = window;
@@ -426,7 +426,7 @@ DOMElement = function DOMElement() { // An impostor for the Element class
     this.focus = function Element_prototype_focus() {};
 
     this.hasAttribute = function Element_prototype_hasAttribute(name) {};	
-    this.scrollTo = function Element_prototype_scrollTo() {};	
+    this.scrollTo = function Element_prototype_scrollTo(xcoord, ycoord) {};	
 };
 
 DOMElement.prototype.querySelectorAll = function Element_prototype_querySelectorAll(selectors) {
@@ -460,7 +460,7 @@ Event.prototype.preventDefault = function Event_prototype_preventDefault() {
 	// TODO: model me
 };
 
-Event.prototype.initEvent = function Event_prototype_initEvent() {	
+Event.prototype.initEvent = function Event_prototype_initEvent(type, bubbles, cancelable) {	
 	// TODO: model me	
 };	
 EventTarget = function EventTarget() {	
@@ -637,7 +637,7 @@ DOMHTMLInputElement = function DOMHTMLTableElement () {
 	this.DOMHTMLElement();
 	delete this.DOMHTMLElement;
 
-	this.setSelectionRange = function input_elt_setSelectionRange() {
+	this.setSelectionRange = function input_elt_setSelectionRange(selectionStart, selectionEnd, selectionDirection) {
 	}	
 }
 
@@ -705,7 +705,7 @@ function ActiveXObject() {
 }
 
 CSSStyleDeclaration = function CSSStyleDeclaration() {
-	this.getPropertyValue = function CSSStyleDeclaration_getPropertyValue() {
+	this.getPropertyValue = function CSSStyleDeclaration_getPropertyValue(property) {
 		// TODO: model me
 	}
 };
@@ -713,7 +713,7 @@ CSSStyleDeclaration = function CSSStyleDeclaration() {
 ArrayBuffer = function ArrayBuffer() {};
 
 Uint8Array = function Uint8Array() {};
-Uint8Array.prototype.subarray = function Uint8Array_prototype_subarray() {
+Uint8Array.prototype.subarray = function Uint8Array_prototype_subarray(begin,end) {
 	// TODO: model me
 };
 
@@ -737,7 +737,7 @@ LocalStorage = function LocalStorage(){
 	this.getItem = function localStorage_getItem(keyName){
 		// TODO: model me
 	},
-	this.removeItem = function localStorage_removeItem(){
+	this.removeItem = function localStorage_removeItem(keyName){
 		// TODO: model me
 	},
 	this.clear = function localStorage_clear(){
@@ -749,7 +749,7 @@ Console = function Console(){
 	this.log = function console_log(){
 		// TODO: model me
 	}
-	this.debug = function console_debug(){
+	this.debug = function console_debug(msg){
 		// TODO: model me
 	}
 	this.info = function console_info(){

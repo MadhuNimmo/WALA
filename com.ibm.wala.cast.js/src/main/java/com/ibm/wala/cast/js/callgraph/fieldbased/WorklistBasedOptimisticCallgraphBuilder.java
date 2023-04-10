@@ -220,7 +220,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       )
               ) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
-                  changed = true;
+                  //changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                 }
               } else if (im != null) {
@@ -229,7 +229,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                 int noOfDefinedParameters = im.getNumberOfParameters();
                 if (!((CallVertex) w).isNew() && noOfPassedParameters == noOfDefinedParameters) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
-                    changed = true;
+                    //changed = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
                 } else if ((((CallVertex) w).isNew()
@@ -238,14 +238,14 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                         && noOfPassedParameters < noOfDefinedParameters)) {
                   if (fv.toSourceLevelString(cache).contains("preamble.js") || fv.toSourceLevelString(cache).contains("prologue.js") || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
-                      changed = true;
+                      //changed = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   } else {
                     if (usingLessParsThanDefined(
                         ((CallVertex) w).getInstruction(), im, false, ((CallVertex) w).isNew())) {
                       if (wReach.add(mapping.getMappedIndex(fv))) {
-                        changed = true;
+                        //changed = true;
                         MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                       }
                     }
@@ -257,7 +257,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                   if ( (((CallVertex) w).isNew() && noOfPassedParameters + 1 == noOfDefinedParameters)
                       || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
-                      changed = true;
+                      //changed = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   }
@@ -271,7 +271,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               if (wReach.add(mapping.getMappedIndex(fv))) {
-                changed = true;
+                //changed = true;
                 MapUtil.findOrCreateSet(pendingReflectiveCallWorklist, (VarVertex) w).add(fv);
               }
             }
