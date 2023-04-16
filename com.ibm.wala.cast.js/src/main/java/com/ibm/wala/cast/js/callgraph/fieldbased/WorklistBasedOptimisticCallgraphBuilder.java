@@ -65,6 +65,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.reflect.TypeToken;
+import java.util.regex.*;
 
 
 /**
@@ -95,6 +96,9 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       new ArrayList<>(
           Arrays.asList(
               CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
+
+  String regexChars = "\\((\\S+)\\@\\d+\\:(\\d+)\\-(\\d+)\\)";
+  Pattern pattern = Pattern.compile(regexChars);
 
   public WorklistBasedOptimisticCallgraphBuilder(
       IClassHierarchy cha,
@@ -150,6 +154,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       }
     }
     int cnt = 0;
+
     /**
      * if bound is missing, calledges are added until all worklists are empty else, the calledges
      * are added until the bound value is hit *
@@ -196,27 +201,33 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               IMethod im = fv.getConcreteType().getMethod(AstMethodReference.fnSelector);
-              if ((((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
-                      || ((CallVertex) w).toSourceLevelString(cache).contains("prologue.js"))
+
+              String callSourceLevelString = ((CallVertex) w).toSourceLevelString(cache);
+              String calleeSourceLevelString = fv.toSourceLevelString(cache);
+
+              if ((callSourceLevelString.contains("preamble.js")
+                      || callSourceLevelString.contains("prologue.js"))
                   && !(fv.getFullName().equals("Lprologue.js/Function_prototype_call")
                       || fv.getFullName().equals("Lprologue.js/Function_prototype_apply"))) {
                 continue;
               }
+
+
               //allow all contructors calls except from prologue/preamble
-              if (im == null || ( !(((CallVertex) w).toSourceLevelString(cache).contains("prologue.js")
-                                || ((CallVertex) w).toSourceLevelString(cache).contains("preamble.js")
-                    ) && (fv.toSourceLevelString(cache).contains("prologue.js@83:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@165:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@200:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@486:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@611:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@708:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@734:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@831:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@852:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@870:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@888:")
-                      || fv.toSourceLevelString(cache).contains("prologue.js@911:"))
+              if (im == null || ( !(callSourceLevelString.contains("prologue.js")
+                                || callSourceLevelString.contains("preamble.js")
+                    ) && (calleeSourceLevelString.contains("prologue.js@83:")
+                      || calleeSourceLevelString.contains("prologue.js@165:")
+                      || calleeSourceLevelString.contains("prologue.js@200:")
+                      || calleeSourceLevelString.contains("prologue.js@486:")
+                      || calleeSourceLevelString.contains("prologue.js@611:")
+                      || calleeSourceLevelString.contains("prologue.js@708:")
+                      || calleeSourceLevelString.contains("prologue.js@734:")
+                      || calleeSourceLevelString.contains("prologue.js@831:")
+                      || calleeSourceLevelString.contains("prologue.js@852:")
+                      || calleeSourceLevelString.contains("prologue.js@870:")
+                      || calleeSourceLevelString.contains("prologue.js@888:")
+                      || calleeSourceLevelString.contains("prologue.js@911:"))
                       )
               ) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
@@ -224,21 +235,24 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                 }
               } else if (im != null) {
+                boolean edgeFound = false;
                 int noOfPassedParameters =
                     ((CallVertex) w).getInstruction().getNumberOfPositionalParameters();
                 int noOfDefinedParameters = im.getNumberOfParameters();
                 if (!((CallVertex) w).isNew() && noOfPassedParameters == noOfDefinedParameters) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     //changed = true;
+                    edgeFound = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
                 } else if ((((CallVertex) w).isNew()
                         && noOfPassedParameters < noOfDefinedParameters)
                     || (!((CallVertex) w).isNew()
                         && noOfPassedParameters < noOfDefinedParameters)) {
-                  if (fv.toSourceLevelString(cache).contains("preamble.js") || fv.toSourceLevelString(cache).contains("prologue.js") || useOfArgumentsArray(im)) {
+                  if (calleeSourceLevelString.contains("preamble.js") || calleeSourceLevelString.contains("prologue.js") || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       //changed = true;
+                      edgeFound = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   } else {
@@ -246,6 +260,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                         ((CallVertex) w).getInstruction(), im, false, ((CallVertex) w).isNew())) {
                       if (wReach.add(mapping.getMappedIndex(fv))) {
                         //changed = true;
+                        edgeFound = true;
                         MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                       }
                     }
@@ -258,10 +273,40 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       //changed = true;
+                      edgeFound = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   }
                 }
+                  /*if(edgeFound == false &&  !(callSourceLevelString.contains("prologue.js")
+                          || callSourceLevelString.contains("preamble.js")
+                  ) && !(calleeSourceLevelString.contains("prologue.js")
+                          || calleeSourceLevelString.contains("preamble.js")
+                  )){
+                  Matcher matcher = pattern.matcher(callSourceLevelString);
+
+                  Matcher matcher2 = pattern.matcher(fv.toSourceLevelString(cache));
+
+                  if(matcher.find() && matcher2.find()){
+                    String callFile = matcher.group(1);
+                    String calleeFile = matcher.group(1);
+                    if(callFile.equals(calleeFile)){
+                      int callStartLine = Integer.parseInt(matcher.group(2));
+                      int callEndLine = Integer.parseInt(matcher.group(3));
+                      int calleeStartLine = Integer.parseInt(matcher2.group(2));
+                      int calleeEndLine = Integer.parseInt(matcher2.group(3));
+                      //System.out.println(callStartLine+" "+callEndLine+" "+ calleeStartLine+" "+ calleeEndLine+" ");
+                      if(calleeStartLine>callStartLine && calleeEndLine<callEndLine){
+                        MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                      }
+                    }
+
+                    ///int callStartLine = Integer.parseInt(callSourceLevelString.split(":")[1].split("-")[0]);
+                    //int callEndLine = Integer.parseInt(callSourceLevelString.split(":")[1].split("-")[1].replace(")", ""));
+                    //int calleeStartLine = Integer.parseInt(calleeSourceLevelString.split(":")[1].split("-")[0]);
+                    //int calleeEndLine = Integer.parseInt(calleeSourceLevelString.split(":")[1].split("-")[1].replace(")", ""));
+                  }
+                }*/
               }
             }
           } else if (handleCallApply && reflectiveCalleeVertices.containsKey(w)) {

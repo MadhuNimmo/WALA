@@ -25,7 +25,7 @@ Proxy = local_proxy;
 /************************************************************************/
 /* Global properties, see spec 15.1					*/
 /************************************************************************/
-NaN = primitive("GlobalNaN");
+/*NaN = primitive("GlobalNaN");
 
 Infinity = primitive("GlobalInfinity");
 
@@ -80,7 +80,7 @@ escape = function escape(str){
 /* Object properties, see spec 15.2					*/
 /************************************************************************/
 
-Object = function Object() {};
+/*Object = function Object() {};
 
 Object$proto$__WALA__ =  {
 
@@ -156,7 +156,7 @@ Object$proto$__WALA__ =  {
 
 };
 
-Object.prototype = Object$proto$__WALA__;
+Object.prototype = Object$proto$__WALA__;*/
 
 /************************************************************************/
 /* Function properties, see spec 15.3					*/
@@ -170,9 +170,9 @@ Function$proto$__WALA__ = {
 
   __proto__: Object.prototype, 
   
-  toString: function Function_prototype_toString() {
+  /*toString: function Function_prototype_toString() {
     return primitive("FunctionToString", this);
-  },
+  },*/
 
   apply: function Function_prototype_apply (thisArg, argArray) {
     return primitive("FunctionApply", this, thisArg, argArray);
@@ -183,10 +183,10 @@ Function$proto$__WALA__ = {
     return primitive("FunctionCall", this, thisArg, arguments);
   },
 
-  bind: function Function_prototype_bind (thisArg) {
+  /*bind: function Function_prototype_bind (thisArg) {
     arguments.shift();
     return primitive("FunctionBind", this, thisArg, arguments);
-  }
+  }*/
 };
 
 local_function.prototype = Function$proto$__WALA__;
@@ -197,7 +197,7 @@ local_function.__proto__ = Function.prototype;
 /* Array properties, see spec 15.4					*/
 /************************************************************************/
 
-Array = function Array() {};
+/*Array = function Array() {};
 
 local_array.__proto__ = Function.prototype;
 
@@ -483,7 +483,7 @@ local_array.prototype = Array$proto$__WALA__;
 /* String properties, see spec 15.4					*/
 /************************************************************************/
 
-String = function String() {};
+/*String = function String() {};
 
 local_string.__proto__ = Function.prototype;
 
@@ -592,7 +592,7 @@ String$proto$__WALA__ = {
 	  return new String();
   },
 
-  fromCharCode: function String_prototype_fromCharCode(num1, num2, /* …, */ numN) {
+  fromCharCode: function String_prototype_fromCharCode(num1, num2, numN) {
 	  return new String(primitive("StringFromCharCode", this));
   },
   
@@ -602,13 +602,13 @@ String$proto$__WALA__ = {
 
 };
 
-local_string.prototype = String$proto$__WALA__;
+local_string.prototype = String$proto$__WALA__;*/
 
 /************************************************************************/
 /* Number properties, see spec 15.7					*/
 /************************************************************************/
 
-Number = function Number() {};
+/*Number = function Number() {};
 
 local_number.__proto__ = Function.prototype;
 
@@ -626,12 +626,12 @@ Number$proto$__WALA__ = {
 
 };
 
-local_number.prototype = Number$proto$__WALA__;
+local_number.prototype = Number$proto$__WALA__;*/
 
 /************************************************************************/
 /* Math properties, see spec 15.8					*/
 /************************************************************************/
-Math = {
+/*Math = {
 
  E: primitive("MathE"),
 
@@ -698,14 +698,14 @@ Math = {
  sqrt: function Math_sqrt (x) { return primitive("MathSqrt", x);},
 
  tan: function Math_tan (x) { return primitive("MathTan", x); }
-};
+};*/
 
 
 /************************************************************************/
 /* RegExp properties, see spec 15.10					*/
 /************************************************************************/
 
-RegExp = function RegExp() {};
+/*RegExp = function RegExp() {};
 
 local_regexp.__proto__ = Function.prototype;
 
@@ -725,13 +725,13 @@ RegExp$proto$__WALA__ = {
 
 };
 
-local_regexp.prototype = RegExp$proto$__WALA__;
+local_regexp.prototype = RegExp$proto$__WALA__;*/
 
 /************************************************************************/
 /* Date properties, see spec 15.9					*/
 /************************************************************************/
 
-Date = function Date() {};
+/*Date = function Date() {};
 
 Data$proto$__WALA__ = {
 
@@ -809,26 +809,26 @@ Date.now = function Date_now() {
 	return new Date().valueOf();
 };
 
-Date.prototype = Data$proto$__WALA__;
+Date.prototype = Data$proto$__WALA__;*/
 
 
 /************************************************************************/
 /* internal stuff
 /************************************************************************/
 
-function Error(str) {
+/*function Error(str) {
 	this.message = new String();
 }
 
 function EvalError(str) {
 	this.message = new String();
-}
+}*/
 
 /************************************************************************/
 /* JSON properties, see 15.12
 /************************************************************************/
 
-JSON = function JSON() {};
+/*JSON = function JSON() {};
 
 JSON$proto$__WALA__ = {
 
@@ -926,4 +926,4 @@ Promise$proto$__WALA__ = {
   }
 }
 
-local_promise.prototype = Promise$proto$__WALA__;
+local_promise.prototype = Promise$proto$__WALA__;*/
