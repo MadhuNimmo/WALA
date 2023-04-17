@@ -96,7 +96,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       new ArrayList<>(
           Arrays.asList(
               CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
-
   String regexChars = "\\((\\S+)\\@\\d+\\:(\\d+)\\-(\\d+)\\)";
   Pattern pattern = Pattern.compile(regexChars);
 
@@ -235,24 +234,23 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                 }
               } else if (im != null) {
-                boolean edgeFound = false;
+                boolean edgeNotFound = false;
                 int noOfPassedParameters =
                     ((CallVertex) w).getInstruction().getNumberOfPositionalParameters();
                 int noOfDefinedParameters = im.getNumberOfParameters();
                 if (!((CallVertex) w).isNew() && noOfPassedParameters == noOfDefinedParameters) {
                   if (wReach.add(mapping.getMappedIndex(fv))) {
                     //changed = true;
-                    edgeFound = true;
                     MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                   }
                 } else if ((((CallVertex) w).isNew()
                         && noOfPassedParameters < noOfDefinedParameters)
                     || (!((CallVertex) w).isNew()
                         && noOfPassedParameters < noOfDefinedParameters)) {
+                  // native methods often have optional paramters, so we are allowing all calls to native methods with less parameters passed than defined
                   if (calleeSourceLevelString.contains("preamble.js") || calleeSourceLevelString.contains("prologue.js") || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       //changed = true;
-                      edgeFound = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
                   } else {
@@ -260,9 +258,10 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                         ((CallVertex) w).getInstruction(), im, false, ((CallVertex) w).isNew())) {
                       if (wReach.add(mapping.getMappedIndex(fv))) {
                         //changed = true;
-                        edgeFound = true;
                         MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                       }
+                    } else {
+                      edgeNotFound = true;
                     }
                   }
                 } else if ((((CallVertex) w).isNew()
@@ -273,12 +272,13 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       || useOfArgumentsArray(im)) {
                     if (wReach.add(mapping.getMappedIndex(fv))) {
                       //changed = true;
-                      edgeFound = true;
                       MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
                     }
+                  } else {
+                    edgeNotFound = true;
                   }
                 }
-                  /*if(edgeFound == false &&  !(callSourceLevelString.contains("prologue.js")
+                  if(edgeNotFound == true &&  !(callSourceLevelString.contains("prologue.js")
                           || callSourceLevelString.contains("preamble.js")
                   ) && !(calleeSourceLevelString.contains("prologue.js")
                           || calleeSourceLevelString.contains("preamble.js")
@@ -295,18 +295,15 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                       int callEndLine = Integer.parseInt(matcher.group(3));
                       int calleeStartLine = Integer.parseInt(matcher2.group(2));
                       int calleeEndLine = Integer.parseInt(matcher2.group(3));
-                      //System.out.println(callStartLine+" "+callEndLine+" "+ calleeStartLine+" "+ calleeEndLine+" ");
                       if(calleeStartLine>callStartLine && calleeEndLine<callEndLine){
-                        MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                        if (wReach.add(mapping.getMappedIndex(fv))) {
+                          //changed = true;
+                          MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
+                        }
                       }
                     }
-
-                    ///int callStartLine = Integer.parseInt(callSourceLevelString.split(":")[1].split("-")[0]);
-                    //int callEndLine = Integer.parseInt(callSourceLevelString.split(":")[1].split("-")[1].replace(")", ""));
-                    //int calleeStartLine = Integer.parseInt(calleeSourceLevelString.split(":")[1].split("-")[0]);
-                    //int calleeEndLine = Integer.parseInt(calleeSourceLevelString.split(":")[1].split("-")[1].replace(")", ""));
                   }
-                }*/
+                }
               }
             }
           } else if (handleCallApply && reflectiveCalleeVertices.containsKey(w)) {
@@ -316,7 +313,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             while (mappedFuncs.hasNext()) {
               FuncVertex fv = mapping.getMappedObject(mappedFuncs.next());
               if (wReach.add(mapping.getMappedIndex(fv))) {
-                //changed = true;
+                changed = true;
                 MapUtil.findOrCreateSet(pendingReflectiveCallWorklist, (VarVertex) w).add(fv);
               }
             }
@@ -445,7 +442,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     VertexFactory factory = flowgraph.getVertexFactory();
     FuncVertex caller = c.getCaller();
     JavaScriptInvoke invk = c.getInstruction();
-
     int offset = 0;
     if (invk.getDeclaredTarget()
         .getSelector()
@@ -464,7 +460,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             factory.makeParamVertex(callee, i + offset),
             worklist);
     }
-
     // flow from return vertex to result vertex
     addFlowEdge(
         flowgraph,
@@ -490,8 +485,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       boolean isFunctionPrototypeCall) {
     VertexFactory factory = flowgraph.getVertexFactory();
     FuncVertex caller = reflectiveCallee.getFunction();
-    // IMethod im = realCallee.getConcreteType().getMethod(AstMethodReference.fnSelector);
-    // if(invk.getNumberOfPositionalParameters() == im.getNumberOfParameters()){
+
     if (isFunctionPrototypeCall) {
       // flow from arguments to parameters
       for (int i = 2; i < invk.getNumberOfPositionalParameters(); ++i) {
@@ -510,7 +504,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
         factory.makeVarVertex(caller, invk.getDef()),
         worklist);
   }
-  // }
 
   private boolean useOfArgumentsArray(IMethod im) {
     if (funcsUsingArgumentsArray.containsKey(im)) {
