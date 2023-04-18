@@ -112,15 +112,15 @@ Object$proto$__WALA__ =  {
     return primitive("ObjectPropertyIsEnumerable", this, V);
   },
 
-  create: function Object_prototype_create() {
+  create: function Object_prototype_create(proto) {
     // TODO: model me
   },
 
-  defineProperty: function Object_prototype_defineProperty() {
-    // TODO: model me
+  defineProperty: function Object_prototype_defineProperty(obj,prop,descriptor) {
+    return primitive("ObjectDefineProperty", obj, prop, descriptor);
   },
 
-  defineProperties: function Object_prototype_defineProperties() {
+  defineProperties: function Object_prototype_defineProperties(obj, props) {
     // TODO: model me
   },
 
@@ -129,27 +129,27 @@ Object$proto$__WALA__ =  {
     // TODO: model me
   },
 
-  getOwnPropertyDescriptor: function Object_prototype_getOwnPropertyDescriptor() {
+  getOwnPropertyDescriptor: function Object_prototype_getOwnPropertyDescriptor(obj,prop) {
     // TODO: model me
   },
 
-  getOwnPropertyDescriptors: function Object_prototype_getOwnPropertyDescriptors() {
+  getOwnPropertyDescriptors: function Object_prototype_getOwnPropertyDescriptors(obj) {
     // TODO: model me
   },
 
-  getOwnPropertyNames: function Object_prototype_getOwnPropertyNames() {
+  getOwnPropertyNames: function Object_prototype_getOwnPropertyNames(obj) {
     // TODO: model me
   },
 
-  keys: function Object_prototype_keys() {
+  keys: function Object_prototype_keys(obj) {
     // TODO: model me
   },
 
-  freeze: function Object_prototype_freeze() {
+  freeze: function Object_prototype_freeze(obj) {
     // TODO: model me
   },
 
-  isExtensible: function Object_prototype_isExtensible() {
+  isExtensible: function Object_prototype_isExtensible(obj) {
     // TODO: model me
   }
 
@@ -328,7 +328,7 @@ Array$proto$__WALA__ = {
     for(var l = 0; i < this.length; l++) {
       var mindex = l;
       for(var i = l; i < this.length; i++) {
-        if (fn(this[mindex], this[i]) < 0) {
+        if (fn.call(undefined,this[mindex], this[i]) < 0) {
           mindex = i;
         }
       }
@@ -467,7 +467,7 @@ Array$proto$__WALA__ = {
 	  return result;
   },
 
-  lastIndexOf: function Array_prototype_lastIndexOf() {
+  lastIndexOf: function Array_prototype_lastIndexOf(searchString, position) {
 	  // TODO: model me
   }
 
@@ -536,8 +536,8 @@ String$proto$__WALA__ = {
     return new String(primitive("StringToLocaleLowerCase", this));
   },
 
-  indexOf: function String_prototype_indexOf(str) {
-    return new Number(primitive("StringIndexOf", this, str));
+  indexOf: function String_prototype_indexOf(searchString, position) {
+    return new Number(primitive("StringIndexOf", this, searchString));
   },
 
   split: function String_prototype_split(separator, limit) {
@@ -592,7 +592,7 @@ String$proto$__WALA__ = {
 	  return new String();
   },
 
-  fromCharCode: function String_prototype_fromCharCode() {
+  fromCharCode: function String_prototype_fromCharCode(num1, num2, numN) {
 	  return new String(primitive("StringFromCharCode", this));
   },
   
@@ -836,7 +836,7 @@ JSON$proto$__WALA__ = {
 
   constructor: JSON,
 
-  parse: function JSON_prototype_parse() {
+  parse: function JSON_prototype_parse(value) {
 	  // TODO: model me
   },
   
@@ -859,7 +859,7 @@ Map$proto$__WALA__ = {
 
   constructor: Map,
 
-  has: function Map_prototype_has () {
+  has: function Map_prototype_has (key) {
     // TO DO
   }
 }
@@ -901,7 +901,7 @@ Proxy$proto$__WALA__ = {
   reject: function Proxy_prototype_reject () {
     // TO DO
   },
-  then: function Proxy_prototype_then () {
+  then: function Proxy_prototype_then (onFulfilled, onRejected) {
     // TO DO
   },
 }
@@ -918,10 +918,10 @@ Promise$proto$__WALA__ = {
 
   constructor: Promise,
 
-  then: function Promise_prototype_then () {
+  then: function Promise_prototype_then (onFulfilled, onRejected) {
     // TO DO
   },
-  catch: function Promise_prototype_catch () {
+  catch: function Promise_prototype_catch (onRejected) {
     // TO DO
   }
 }
