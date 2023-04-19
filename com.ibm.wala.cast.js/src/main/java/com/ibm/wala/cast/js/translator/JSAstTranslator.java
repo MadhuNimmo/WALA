@@ -268,17 +268,17 @@ public class JSAstTranslator extends AstTranslator {
     }
     try {
       context
-              .cfg()
-              .addInstruction(
-                      ((JSInstructionFactory) insts)
-                              .Invoke(
-                                      context.cfg().getCurrentInstruction(),
-                                      tmp,
-                                      result,
-                                      new int[] {nm},
-                                      exception,
-                                      new DynamicCallSiteReference(
-                                              JavaScriptMethods.ctorReference, context.cfg().getCurrentInstruction())));
+          .cfg()
+          .addInstruction(
+              ((JSInstructionFactory) insts)
+                  .Invoke(
+                      context.cfg().getCurrentInstruction(),
+                      tmp,
+                      result,
+                      new int[] {nm},
+                      exception,
+                      new DynamicCallSiteReference(
+                          JavaScriptMethods.ctorReference, context.cfg().getCurrentInstruction())));
     } finally {
       if (old != null) {
         currentPosition = old;

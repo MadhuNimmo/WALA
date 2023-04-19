@@ -273,8 +273,8 @@ Image = function Image() {
 
 DOMWindow = function DOMWindow(){
 	this.name = new String();
-	this.open = function window_open(url, target, windowFeatures) { 
-		note_url(url); 
+	this.open = function window_open(url, target, windowFeatures) {
+		note_url(url);
 	};
 	this.addEventListener = function Window_prototype_addEventListener(name, fn , options) {
 		fn();
@@ -460,7 +460,7 @@ Event.prototype.preventDefault = function Event_prototype_preventDefault() {
 	// TODO: model me
 };
 
-Event.prototype.initEvent = function Event_prototype_initEvent(type, bubbles, cancelable) {	
+Event.prototype.initEvent = function Event_prototype_initEvent(type, bubbles, cancelable) {
 	// TODO: model me	
 };	
 EventTarget = function EventTarget() {	

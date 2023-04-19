@@ -230,7 +230,7 @@ public class FlowGraphBuilder {
     }
 
     private void visitPut(int val, String propName) {
-      //Vertex w2 = factory.makePropVertex(propName);
+      // Vertex w2 = factory.makePropVertex(propName);
       /*if(func.getEnclosingFileName().length()>1){
         propName = func.getEnclosingFileName()+"@"+propName;
         //propArr.add(propName);
@@ -268,16 +268,16 @@ public class FlowGraphBuilder {
       int p = pw.getMemberRef();
       if (symtab.isConstant(p)) {
         String pn = JSCallGraphUtil.simulateToStringForPropertyNames(symtab.getConstantValue(p));
-        //Vertex w2 = factory.makePropVertex(pn);
+        // Vertex w2 = factory.makePropVertex(pn);
         /*if(func.getEnclosingFileName().length()>1){
           pn = func.getEnclosingFileName()+"@"+pn;
           //propArr.add(pn);
         }*/
         Vertex v = factory.makeVarVertex(func, pw.getValue()), w = factory.makePropVertex(pn);
         flowgraph.addEdge(v, w);
-         /*if(func.getEnclosingFileName().length()>1){
-            flowgraph.addEdge(v, w2);
-         }*/
+        /*if(func.getEnclosingFileName().length()>1){
+           flowgraph.addEdge(v, w2);
+        }*/
       }
     }
 
