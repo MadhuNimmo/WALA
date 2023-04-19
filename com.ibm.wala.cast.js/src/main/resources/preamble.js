@@ -460,7 +460,7 @@ Event.prototype.preventDefault = function Event_prototype_preventDefault() {
 	// TODO: model me
 };
 
-Event.prototype.initEvent = function Event_prototype_initEvent() {	
+Event.prototype.initEvent = function Event_prototype_initEvent(type, bubbles, cancelable) {
 	// TODO: model me	
 };	
 EventTarget = function EventTarget() {	
@@ -637,7 +637,7 @@ DOMHTMLInputElement = function DOMHTMLTableElement () {
 	this.DOMHTMLElement();
 	delete this.DOMHTMLElement;
 
-	this.setSelectionRange = function input_elt_setSelectionRange() {
+	this.setSelectionRange = function input_elt_setSelectionRange(selectionStart, selectionEnd, selectionDirection) {
 	}	
 }
 

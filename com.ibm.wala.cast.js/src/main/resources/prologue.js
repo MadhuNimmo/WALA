@@ -840,7 +840,7 @@ JSON$proto$__WALA__ = {
 	  // TODO: model me
   },
   
-  stringify: function JSON_prototype_stringify() {
+  stringify: function JSON_prototype_stringify(value, replacer, space) {
 	  // TODO: model me
   }
 
