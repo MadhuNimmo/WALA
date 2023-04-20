@@ -439,7 +439,7 @@ public abstract class FieldBasedCallGraphBuilder {
     return result;
   }
 
-  private boolean useOfArgumentsArray(IMethod im) {
+  public boolean useOfArgumentsArray(IMethod im) {
     if (funcsUsingArgumentsArray.containsKey(im)) {
       return funcsUsingArgumentsArray.get(im);
     } else {
@@ -461,7 +461,7 @@ public abstract class FieldBasedCallGraphBuilder {
     }
   }
 
-  private boolean usingLessParsThanDefined(
+  public boolean usingLessParsThanDefined(
       JavaScriptInvoke invk, IMethod im, boolean isCallorApply, boolean isNew) {
     boolean allUsed = true;
     if (funcsUsingLessParsThanDefined.containsKey(im)) {
@@ -507,9 +507,10 @@ public abstract class FieldBasedCallGraphBuilder {
     }
     if (allUsed) {
       funcsUsingLessParsThanDefined.put(im, true);
+      return true;
     } else {
       funcsUsingLessParsThanDefined.put(im, false);
+      return false;
     }
-    return funcsUsingLessParsThanDefined.get(im);
   }
 }

@@ -26,19 +26,8 @@ import com.ibm.wala.cast.types.AstMethodReference;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.IAnalysisCacheView;
-import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
-import com.ibm.wala.shrike.shrikeBT.IUnaryOpInstruction;
-import com.ibm.wala.ssa.DefUse;
-import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.IRFactory;
-import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
-import com.ibm.wala.ssa.SSABinaryOpInstruction;
-import com.ibm.wala.ssa.SSAConditionalBranchInstruction;
-import com.ibm.wala.ssa.SSAInstruction;
-import com.ibm.wala.ssa.SSAOptions;
-import com.ibm.wala.ssa.SSAPhiInstruction;
-import com.ibm.wala.ssa.SSAUnaryOpInstruction;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
@@ -53,7 +42,6 @@ import com.ibm.wala.util.intset.MutableMapping;
 import com.ibm.wala.util.intset.MutableSharedBitVectorIntSet;
 import com.ibm.wala.util.intset.OrdinalSetMapping;
 import java.util.*;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.*;
@@ -88,6 +76,22 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
               CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
   String regexChars = "\\((\\S+)\\@\\d+\\:(\\d+)\\-(\\d+)\\)";
   Pattern pattern = Pattern.compile(regexChars);
+
+  List<String> constructorCalls =
+      new ArrayList<>(
+          Arrays.asList(
+              "Lprologue.js/Object",
+              "Lprologue.js/Function",
+              "Lprologue.js/Array",
+              "Lprologue.js/String",
+              "Lprologue.js/Number",
+              "Lprologue.js/RegExp",
+              "Lprologue.js/Date",
+              "Lprologue.js/JSON",
+              "Lprologue.js/Map",
+              "Lprologue.js/Set",
+              "Lprologue.js/Proxy",
+              "Lprologue.js/Promise"));
 
   public WorklistBasedOptimisticCallgraphBuilder(
       IClassHierarchy cha,
@@ -201,22 +205,11 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                 continue;
               }
 
-              // allow all contructors calls except from prologue/preamble
+              // allow all contructors calls unfiltered except from prologue/preamble
               if (im == null
                   || (!(callSourceLevelString.contains("prologue.js")
                           || callSourceLevelString.contains("preamble.js"))
-                      && (calleeSourceLevelString.contains("prologue.js@83:")
-                          || calleeSourceLevelString.contains("prologue.js@165:")
-                          || calleeSourceLevelString.contains("prologue.js@200:")
-                          || calleeSourceLevelString.contains("prologue.js@486:")
-                          || calleeSourceLevelString.contains("prologue.js@611:")
-                          || calleeSourceLevelString.contains("prologue.js@708:")
-                          || calleeSourceLevelString.contains("prologue.js@734:")
-                          || calleeSourceLevelString.contains("prologue.js@831:")
-                          || calleeSourceLevelString.contains("prologue.js@852:")
-                          || calleeSourceLevelString.contains("prologue.js@870:")
-                          || calleeSourceLevelString.contains("prologue.js@888:")
-                          || calleeSourceLevelString.contains("prologue.js@911:")))) {
+                      && constructorCalls.contains(fv.getFullName()))) {
                 if (wReach.add(mapping.getMappedIndex(fv))) {
                   // changed = true;
                   MapUtil.findOrCreateSet(pendingCallWorklist, w).add(fv);
@@ -499,93 +492,5 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
         factory.makeRetVertex(realCallee),
         factory.makeVarVertex(caller, invk.getDef()),
         worklist);
-  }
-
-  private boolean useOfArgumentsArray(IMethod im) {
-    if (funcsUsingArgumentsArray.containsKey(im)) {
-      return funcsUsingArgumentsArray.get(im);
-    } else {
-      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
-      DefUse du = new DefUse(ir);
-      SSAInstruction[] statements = ir.getInstructions();
-      int instNum = statements[0].getDef();
-      boolean argumentsArrUse = false;
-      try {
-        Iterator<SSAInstruction> instNumUse = du.getUses(instNum);
-        if (instNumUse.hasNext()) {
-          argumentsArrUse = true;
-        }
-      } catch (ArrayIndexOutOfBoundsException exception) {
-        argumentsArrUse = true;
-      }
-      funcsUsingArgumentsArray.put(im, argumentsArrUse);
-      return argumentsArrUse;
-    }
-  }
-
-  private boolean usingLessParsThanDefined(
-      JavaScriptInvoke invk, IMethod im, boolean isCallorApply, boolean isNew) {
-    boolean allUsed = true;
-    if (funcsUsingLessParsThanDefined.containsKey(im)) {
-      allUsed = funcsUsingLessParsThanDefined.get(im);
-    } else {
-      IR ir = factoryir.makeIR(im, Everywhere.EVERYWHERE, new SSAOptions());
-
-      Map<Integer, Boolean> extraParsList = new HashMap<>();
-      int i = 0;
-      if (isNew) {
-        i = invk.getNumberOfPositionalParameters() + 2;
-      } else if (isCallorApply) {
-        i = invk.getNumberOfPositionalParameters();
-      } else {
-        i = invk.getNumberOfPositionalParameters() + 1;
-      }
-      for (; i <= im.getNumberOfParameters(); i++) {
-        extraParsList.put(i, false);
-      }
-      for (SSAInstruction statement : ir.getInstructions()) {
-        if (statement instanceof SSAConditionalBranchInstruction
-            || (statement instanceof SSAUnaryOpInstruction
-                && ((SSAUnaryOpInstruction) statement).getOpcode()
-                    == IUnaryOpInstruction.Operator.NEG)
-            || (statement instanceof SSABinaryOpInstruction
-                && binaryOpList.contains(((SSABinaryOpInstruction) statement).getOperator()))
-            || statement instanceof SSAAbstractInvokeInstruction) {
-          for (int j = 0; j < statement.getNumberOfUses(); j++) {
-            if (extraParsList.containsKey(statement.getUse(j))) {
-              extraParsList.put(statement.getUse(j), true);
-            }
-          }
-        }
-      }
-
-      for (SSAInstruction inst : Iterator2Iterable.make(ir.iteratePhis())) {
-        // if (inst instanceof SSAPhiInstruction){
-        SSAPhiInstruction phi = (SSAPhiInstruction) inst;
-        if (phi == null) {
-          continue;
-        } else {
-          for (int j = 0; j < inst.getNumberOfUses(); j++) {
-            if (extraParsList.containsKey(inst.getUse(j))) {
-              extraParsList.put(inst.getUse(j), true);
-            }
-          }
-        }
-      }
-
-      for (Boolean value : extraParsList.values()) {
-        if (!value) {
-          allUsed = false;
-          break;
-        }
-      }
-    }
-    if (allUsed) {
-      funcsUsingLessParsThanDefined.put(im, true);
-      return true;
-    } else {
-      funcsUsingLessParsThanDefined.put(im, false);
-      return false;
-    }
   }
 }
