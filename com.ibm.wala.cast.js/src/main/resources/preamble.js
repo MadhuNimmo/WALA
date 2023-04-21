@@ -274,19 +274,19 @@ Image = function Image() {
 DOMWindow = function DOMWindow(){
 	this.name = new String();
 	this.open = function window_open(url, target, windowFeatures) {
-		note_url(url);
+		note_url.call(this,url);
 	};
 	this.addEventListener = function Window_prototype_addEventListener(name, fn , options) {
-		fn();
+		fn.call(this);
 	};
 	this.alert = function Window_prototype_alert(msg) {
 		// as everyone knows, alert is pure
 	};
 	this.setInterval = function Window_prototype_setInterval(fn, interval) {
-		fn();
+		fn.call(this);
 	};
 	this.setTimeout = function Window_prototype_setTimeout(fn, timeout) {
-		fn();
+		fn.call(this);
 	};
 	this.clearInterval = function Window_prototype_clearInterval(interval) {};
 	this.clearTimeout = function Window_prototype_clearTimeout(timeout) {};
@@ -752,7 +752,7 @@ Console = function Console(){
 	this.debug = function console_debug(msg){
 		// TODO: model me
 	}
-	this.info = function console_info(){
+	this.info = function console_info(msg){
 		// TODO: model me
 	}
 }
