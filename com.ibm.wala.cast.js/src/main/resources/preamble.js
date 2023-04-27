@@ -425,8 +425,8 @@ DOMElement = function DOMElement() { // An impostor for the Element class
 
     this.focus = function Element_prototype_focus() {};
 
-    this.hasAttribute = function Element_prototype_hasAttribute(name) {};	
-    this.scrollTo = function Element_prototype_scrollTo(xcoord, ycoord) {};	
+    this.hasAttribute = function Element_prototype_hasAttribute(name) {};
+    this.scrollTo = function Element_prototype_scrollTo(xcoord, ycoord) {};
 };
 
 DOMElement.prototype.querySelectorAll = function Element_prototype_querySelectorAll(selectors) {

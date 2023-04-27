@@ -68,12 +68,6 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
 
   private IRFactory<IMethod> factoryir = AstIRFactory.makeDefaultFactory();
 
-  private Map<IMethod, Boolean> funcsUsingArgumentsArray = new HashMap<>();
-  private Map<IMethod, Boolean> funcsUsingLessParsThanDefined = new HashMap<>();
-  List<CAstBinaryOp> binaryOpList =
-      new ArrayList<>(
-          Arrays.asList(
-              CAstBinaryOp.EQ, CAstBinaryOp.NE, CAstBinaryOp.STRICT_EQ, CAstBinaryOp.STRICT_NE));
   String regexChars = "\\((\\S+)\\@\\d+\\:(\\d+)\\-(\\d+)\\)";
   Pattern pattern = Pattern.compile(regexChars);
 
