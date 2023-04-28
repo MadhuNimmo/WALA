@@ -11,7 +11,6 @@
 package com.ibm.wala.cast.js.callgraph.fieldbased;
 
 import com.ibm.wala.cast.ir.ssa.AstIRFactory;
-import com.ibm.wala.cast.ir.ssa.CAstBinaryOp;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraph;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.CallVertex;
@@ -425,6 +424,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     VertexFactory factory = flowgraph.getVertexFactory();
     FuncVertex caller = c.getCaller();
     JavaScriptInvoke invk = c.getInstruction();
+
     int offset = 0;
     if (invk.getDeclaredTarget()
         .getSelector()
@@ -443,6 +443,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             factory.makeParamVertex(callee, i + offset),
             worklist);
     }
+
     // flow from return vertex to result vertex
     addFlowEdge(
         flowgraph,
