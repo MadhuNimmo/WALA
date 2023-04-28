@@ -113,9 +113,8 @@ public class CallGraph2JSON {
 
   public void serializeCallSite(
       CGNode nd, CallSiteReference callsite, Set<CGNode> targets, Map<String, Set<String>> edges) {
-    Set<String> targetNames =
-        MapUtil.findOrCreateSet(
-            edges, getJSONRepForCallSite(nd.getMethod(), nd.getContext(), callsite));
+    String callerName = getJSONRepForCallSite(nd.getMethod(), nd.getContext(), callsite);
+    Set<String> targetNames = MapUtil.findOrCreateSet(edges, callerName);
     for (CGNode target : targets) {
       IMethod trueTarget = getCallTargetMethod(target.getMethod());
       if (trueTarget == null
@@ -123,12 +122,16 @@ public class CallGraph2JSON {
           || (ignoreHarness && isHarnessMethod(trueTarget))) {
         continue;
       }
-      targetNames.add(getJSONRepForNode(trueTarget, target.getContext()));
+      String calleeName = getJSONRepForNode(trueTarget, target.getContext());
+      if (!calleeName.equals(callerName)) {
+        targetNames.add(calleeName);
+      }
     }
   }
 
   private String getJSONRepForNode(IMethod method, Context context) {
     String result;
+    String nativeString = "(Native)";
     if (isHarnessMethod(method) || isFunctionPrototypeCallOrApply(method)) {
       // just use the method name; position is meaningless
       result = getNativeMethodName(method);
@@ -138,6 +141,12 @@ public class CallGraph2JSON {
     }
     if (exposeContexts) {
       result += getContextString(context);
+    }
+    if ((result.startsWith("Function_prototype_call")
+            || result.startsWith("Function_prototype_apply"))
+        && result.split(nativeString, -1).length - 1 == 2) {
+      String mainCaller = result.split("\\[")[1];
+      result = mainCaller.substring(0, mainCaller.length() - 1);
     }
     return result;
   }
@@ -163,6 +172,7 @@ public class CallGraph2JSON {
 
   private String getJSONRepForCallSite(IMethod method, Context context, CallSiteReference site) {
     String result;
+    String nativeString = "(Native)";
     if (isHarnessMethod(method) || isFunctionPrototypeCallOrApply(method)) {
       result = getNativeMethodName(method);
     } else {
@@ -171,6 +181,12 @@ public class CallGraph2JSON {
     }
     if (exposeContexts) {
       result += getContextString(context);
+    }
+    if ((result.startsWith("Function_prototype_call")
+            || result.startsWith("Function_prototype_apply"))
+        && result.split(nativeString, -1).length - 1 == 2) {
+      String mainCaller = result.split("\\[")[1];
+      result = mainCaller.substring(0, mainCaller.length() - 1);
     }
     return result;
   }
