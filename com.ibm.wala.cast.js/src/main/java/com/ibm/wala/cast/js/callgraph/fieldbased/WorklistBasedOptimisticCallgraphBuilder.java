@@ -14,6 +14,7 @@ import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraph;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.FlowGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.CallVertex;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.FuncVertex;
+import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.PropVertex;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.VarVertex;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.Vertex;
 import com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices.VertexFactory;
@@ -103,6 +104,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     /** maps to maintain the list of reachable calls that are yet to be processed * */
     Map<Vertex, Set<FuncVertex>> pendingCallWorklist = HashMapFactory.make();
     Map<Vertex, Set<FuncVertex>> pendingReflectiveCallWorklist = HashMapFactory.make();
+    Set<Vertex> pendingFlowWorklist = HashSetFactory.make();
 
     for (Vertex v : flowgraph) {
       if (v instanceof FuncVertex) {
@@ -114,6 +116,9 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
       }
     }
     int cnt = 0;
+
+    int flowCnt = 0;
+    int flowBound = 6;
     /**
      * if bound is missing, calledges are added until all worklists are empty else, the calledges
      * are added until the bound value is hit *
@@ -124,25 +129,33 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
                 || !pendingReflectiveCallWorklist.isEmpty()))
         || (cnt < bound
             && (!worklist.isEmpty()
+                || !pendingFlowWorklist.isEmpty()
                 || !pendingCallWorklist.isEmpty()
                 || !pendingReflectiveCallWorklist.isEmpty()))) {
-      if (worklist.isEmpty()) {
+      if (pendingFlowWorklist.isEmpty()) {
         processPendingCallWorklist(
             flowgraph,
             pendingCallWorklist,
             factory,
             reachingFunctions,
             reflectiveCalleeVertices,
-            worklist,
+            pendingFlowWorklist,
             mapping);
         processPendingReflectiveCallWorklist(
-            flowgraph, pendingReflectiveCallWorklist, reflectiveCalleeVertices, worklist);
+            flowgraph,
+            pendingReflectiveCallWorklist,
+            reflectiveCalleeVertices,
+            pendingFlowWorklist);
         pendingCallWorklist.clear();
         pendingReflectiveCallWorklist.clear();
       }
-      while (!worklist.isEmpty()) {
+      while (flowCnt < flowBound && (!pendingFlowWorklist.isEmpty() || !worklist.isEmpty())) {
         MonitorUtil.throwExceptionIfCanceled(monitor);
-
+        if (worklist.isEmpty()) {
+          worklist.addAll(pendingFlowWorklist);
+          pendingFlowWorklist.clear();
+          flowCnt += 1;
+        }
         Vertex v = worklist.iterator().next();
         worklist.remove(v);
         // Set<FuncVertex> vReach = MapUtil.findOrCreateSet(reachingFunctions, v);
@@ -179,13 +192,21 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
 
             changed = wReach.addAll(vReach);
           }
-          if (changed) worklist.add(w);
+          // if (changed) worklist.add(w);
+          if (changed) {
+            if (w instanceof PropVertex) {
+              pendingFlowWorklist.add(w);
+            } else {
+              worklist.add(w);
+            }
+          }
         }
       }
       cnt += 1;
     }
 
     System.out.println("The last executed bound was : " + cnt);
+    System.out.println("The last executed flow bound was : " + flowCnt);
 
     Set<Pair<CallVertex, FuncVertex>> res = HashSetFactory.make();
     // for (Map.Entry<Vertex, Set<FuncVertex>> entry : reachingFunctions.entrySet()) {
