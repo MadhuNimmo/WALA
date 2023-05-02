@@ -256,6 +256,7 @@ public class FlowGraphBuilder {
       int p = pw.getMemberRef();
       if (symtab.isConstant(p)) {
         String pn = JSCallGraphUtil.simulateToStringForPropertyNames(symtab.getConstantValue(p));
+
         Vertex v = factory.makeVarVertex(func, pw.getValue()), w = factory.makePropVertex(pn);
         flowgraph.addEdge(v, w);
       }
