@@ -129,15 +129,15 @@ Object$proto$__WALA__ =  {
     // TODO: model me
   },
 
-  getOwnPropertyDescriptor: function Object_prototype_getOwnPropertyDescriptor() {
+  getOwnPropertyDescriptor: function Object_prototype_getOwnPropertyDescriptor(obj,prop) {
     // TODO: model me
   },
 
-  getOwnPropertyDescriptors: function Object_prototype_getOwnPropertyDescriptors() {
+  getOwnPropertyDescriptors: function Object_prototype_getOwnPropertyDescriptors(obj) {
     // TODO: model me
   },
 
-  getOwnPropertyNames: function Object_prototype_getOwnPropertyNames() {
+  getOwnPropertyNames: function Object_prototype_getOwnPropertyNames(obj) {
     // TODO: model me
   },
 
@@ -536,8 +536,8 @@ String$proto$__WALA__ = {
     return new String(primitive("StringToLocaleLowerCase", this));
   },
 
-  indexOf: function String_prototype_indexOf(str) {
-    return new Number(primitive("StringIndexOf", this, str));
+  indexOf: function String_prototype_indexOf(searchString, position) {
+    return new Number(primitive("StringIndexOf", this, searchString));
   },
 
   split: function String_prototype_split(separator, limit) {
@@ -592,7 +592,7 @@ String$proto$__WALA__ = {
 	  return new String();
   },
 
-  fromCharCode: function String_prototype_fromCharCode() {
+  fromCharCode: function String_prototype_fromCharCode(num1, num2, numN) {
 	  return new String(primitive("StringFromCharCode", this));
   },
   
@@ -840,7 +840,7 @@ JSON$proto$__WALA__ = {
 	  // TODO: model me
   },
   
-  stringify: function JSON_prototype_stringify(value) {
+  stringify: function JSON_prototype_stringify(value, replacer, space) {
 	  // TODO: model me
   }
 
@@ -901,7 +901,7 @@ Proxy$proto$__WALA__ = {
   reject: function Proxy_prototype_reject () {
     // TO DO
   },
-  then: function Proxy_prototype_then () {
+  then: function Proxy_prototype_then (onFulfilled, onRejected) {
     // TO DO
   },
 }
@@ -918,10 +918,10 @@ Promise$proto$__WALA__ = {
 
   constructor: Promise,
 
-  then: function Promise_prototype_then () {
+  then: function Promise_prototype_then (onFulfilled, onRejected) {
     // TO DO
   },
-  catch: function Promise_prototype_catch () {
+  catch: function Promise_prototype_catch (onRejected) {
     // TO DO
   }
 }
