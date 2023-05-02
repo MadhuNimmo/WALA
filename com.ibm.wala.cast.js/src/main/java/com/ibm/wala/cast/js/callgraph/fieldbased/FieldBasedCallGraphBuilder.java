@@ -319,8 +319,14 @@ public abstract class FieldBasedCallGraphBuilder {
       IMethod reflectiveTgtMethod =
           targetSelector.getCalleeTarget(
               functionPrototypeCallNode, reflectiveCallSite, f.getConcreteType());
-      // allow function signature filtering for all calls via call but prevent filtering for such calls within prologue.js as such calls are designed in a different way
-      if(!callVertex.toSourceLevelString(cache).contains("prologue.js") && functionPrototypeCallNode.getMethod().getSignature().contains("prologue.js.Function_prototype_call") && reflectiveTgtMethod!=null){
+      // allow function signature filtering for all calls via call but prevent filtering for such
+      // calls within prologue.js as such calls are designed in a different way
+      if (!callVertex.toSourceLevelString(cache).contains("prologue.js")
+          && functionPrototypeCallNode
+              .getMethod()
+              .getSignature()
+              .contains("prologue.js.Function_prototype_call")
+          && reflectiveTgtMethod != null) {
         if (callVertex.getInstruction().getNumberOfPositionalParameters()
             <= reflectiveTgtMethod.getNumberOfParameters()) {
           if (useOfArgumentsArray(reflectiveTgtMethod)
@@ -341,9 +347,9 @@ public abstract class FieldBasedCallGraphBuilder {
                     cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
           }
         }
-      }else{
-          addEdgeToJSCallGraph(
-                  cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
+      } else {
+        addEdgeToJSCallGraph(
+            cg, reflectiveCallSite, reflectiveTgtMethod, functionPrototypeCallNode);
       }
     }
     return ret;
@@ -433,7 +439,7 @@ public abstract class FieldBasedCallGraphBuilder {
     return result;
   }
 
-  private boolean useOfArgumentsArray(IMethod im) {
+  public boolean useOfArgumentsArray(IMethod im) {
     if (funcsUsingArgumentsArray.containsKey(im)) {
       return funcsUsingArgumentsArray.get(im);
     } else {
@@ -455,7 +461,7 @@ public abstract class FieldBasedCallGraphBuilder {
     }
   }
 
-  private boolean usingLessParsThanDefined(
+  public boolean usingLessParsThanDefined(
       JavaScriptInvoke invk, IMethod im, boolean isCallorApply, boolean isNew) {
     boolean allUsed = true;
     if (funcsUsingLessParsThanDefined.containsKey(im)) {
@@ -501,9 +507,10 @@ public abstract class FieldBasedCallGraphBuilder {
     }
     if (allUsed) {
       funcsUsingLessParsThanDefined.put(im, true);
+      return true;
     } else {
       funcsUsingLessParsThanDefined.put(im, false);
+      return false;
     }
-    return funcsUsingLessParsThanDefined.get(im);
   }
 }
