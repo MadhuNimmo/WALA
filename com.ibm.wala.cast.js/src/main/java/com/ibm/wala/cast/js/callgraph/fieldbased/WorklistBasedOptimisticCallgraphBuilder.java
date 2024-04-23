@@ -122,7 +122,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
             && (!worklist.isEmpty()
                 || !pendingCallWorklist.isEmpty()
                 || !pendingReflectiveCallWorklist.isEmpty()))
-        || (cnt < bound
+        || (cnt <= bound
             && (!worklist.isEmpty()
                 || !pendingCallWorklist.isEmpty()
                 || !pendingReflectiveCallWorklist.isEmpty()))) {
