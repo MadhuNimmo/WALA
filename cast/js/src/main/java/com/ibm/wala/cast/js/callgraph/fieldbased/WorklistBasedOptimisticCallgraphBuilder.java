@@ -78,7 +78,7 @@ public class WorklistBasedOptimisticCallgraphBuilder extends FieldBasedCallGraph
     return builder.buildFlowGraph();
   }
 
-  private MutableIntSet findOrCreateMutableIntSet(Map<Vertex, MutableIntSet> M, Vertex v) {
+  private static MutableIntSet findOrCreateMutableIntSet(Map<Vertex, MutableIntSet> M, Vertex v) {
     if (M == null) {
       throw new IllegalArgumentException("M is null");
     }
