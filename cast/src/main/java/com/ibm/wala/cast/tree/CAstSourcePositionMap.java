@@ -43,7 +43,9 @@ public interface CAstSourcePositionMap {
      */
     default String prettyPrint() {
       String file = getURL().getFile();
-      file = file.substring(file.lastIndexOf('/') + 1);
+      // TEMPORARY HACK: don't truncate the file path, to ensure uniqueness
+      // we'd like a proper fix here that doesn't use absolute paths
+      // file = file.substring(file.lastIndexOf('/') + 1);
 
       int line = getFirstLine(), start_offset = getFirstOffset(), end_offset = getLastOffset();
       return file + '@' + line + ':' + start_offset + '-' + end_offset;

@@ -215,12 +215,22 @@ public class CallGraph2JSON {
     return false;
   }
 
+  private static final boolean FILTER_EMPTY = false;
+
   /**
    * Converts a call graph map produced by {@link #extractEdges(CallGraph)} to JSON, eliding call
    * sites with no targets.
    */
   public static String toJSON(Map<String, Map<String, Set<String>>> map) {
     // strip out call sites with no targets
+    Map<String, Map<String, Set<String>>> cgToSerialize =
+        FILTER_EMPTY ? filterEmptyCallSites(map) : map;
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    return gson.toJson(cgToSerialize);
+  }
+
+  private static Map<String, Map<String, Set<String>>> filterEmptyCallSites(
+      Map<String, Map<String, Set<String>>> map) {
     Map<String, Map<String, Set<String>>> filtered = new HashMap<>();
     for (Map.Entry<String, Map<String, Set<String>>> entry : map.entrySet()) {
       String methodLoc = entry.getKey();
@@ -233,7 +243,6 @@ public class CallGraph2JSON {
         filtered.put(methodLoc, filteredSites);
       }
     }
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    return gson.toJson(filtered);
+    return filtered;
   }
 }

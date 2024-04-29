@@ -10,6 +10,8 @@
  */
 package com.ibm.wala.cast.js.callgraph.fieldbased.flowgraph.vertices;
 
+import com.ibm.wala.ipa.callgraph.IAnalysisCacheView;
+
 /**
  * A lexical access vertex represents a lexical variable, i.e., a local variable that is accessed
  * from within a nested function. It is identified by the name of its defining function, and its own
@@ -37,5 +39,10 @@ public class LexicalVarVertex extends Vertex {
   @Override
   public String toString() {
     return "LexVar(" + definer.substring(definer.lastIndexOf('/') + 1) + ", " + name + ')';
+  }
+
+  @Override
+  public String toSourceLevelString(IAnalysisCacheView cache) {
+    return "LexVar(" + definer + ", " + name + ')';
   }
 }
