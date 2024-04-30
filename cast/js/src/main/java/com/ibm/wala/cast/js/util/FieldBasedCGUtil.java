@@ -19,7 +19,6 @@ import com.ibm.wala.cast.js.callgraph.fieldbased.PessimisticCallGraphBuilder;
 import com.ibm.wala.cast.js.callgraph.fieldbased.WorklistBasedOptimisticCallgraphBuilder;
 import com.ibm.wala.cast.js.html.JSSourceExtractor;
 import com.ibm.wala.cast.js.html.WebPageLoaderFactory;
-import com.ibm.wala.cast.js.html.WebUtil;
 import com.ibm.wala.cast.js.ipa.callgraph.JSAnalysisOptions;
 import com.ibm.wala.cast.js.ipa.callgraph.JSCallGraphUtil;
 import com.ibm.wala.cast.js.loader.JavaScriptLoader;
@@ -180,9 +179,7 @@ public class FieldBasedCGUtil {
     for (Path p : jsFiles) {
       scripts.add(new SourceURLModule(p.toUri().toURL()));
     }
-    JavaScriptLoader.addBootstrapFile(WebUtil.preamble);
     scripts.add(JSCallGraphUtil.getPrologueFile("prologue.js"));
-    scripts.add(JSCallGraphUtil.getPrologueFile("preamble.js"));
     return scripts;
   }
 
