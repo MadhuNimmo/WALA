@@ -20,7 +20,7 @@ public class TestBoundedFieldBasedCG extends AbstractFieldBasedTest {
   private static final Object[][] assertionsForBound0JS =
       new Object[][] {
         new Object[] {ROOT, new String[] {"suffix:bounded.js"}},
-        new Object[] {"suffix:bounded.js", new String[] {"suffix:y","!suffix:x","suffix:call"}},
+        new Object[] {"suffix:bounded.js", new String[] {"suffix:y", "!suffix:x", "suffix:call"}},
         new Object[] {"suffix:call", new String[] {"!suffix:m"}}
       };
 
@@ -33,7 +33,7 @@ public class TestBoundedFieldBasedCG extends AbstractFieldBasedTest {
   private static final Object[][] assertionsForBound1JS =
       new Object[][] {
         new Object[] {ROOT, new String[] {"suffix:bounded.js"}},
-        new Object[] {"suffix:bounded.js", new String[] {"suffix:x", "suffix:y","suffix:call"}},
+        new Object[] {"suffix:bounded.js", new String[] {"suffix:x", "suffix:y", "suffix:call"}},
         new Object[] {"suffix:call", new String[] {"!suffix:m"}}
       };
 
