@@ -221,7 +221,6 @@ public class CallGraph2JSON {
    */
   public static String toJSON(Map<String, Map<String, Set<String>>> map) {
     // strip out call sites with no targets
-
     Map<String, Map<String, Set<String>>> filtered = new HashMap<>();
     for (Map.Entry<String, Map<String, Set<String>>> entry : map.entrySet()) {
       String methodLoc = entry.getKey();
